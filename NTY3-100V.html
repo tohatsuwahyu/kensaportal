@@ -10,25 +10,29 @@
   <meta name="theme-color" content="#0a8ffc" />
   <link rel="apple-touch-icon" href="tsh.png" onerror="this.remove()">
   <link rel="icon" href="tsh.png" onerror="this.remove()">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
   <!-- PDF libs -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
-    html, body { background:#e7e7e7; margin:0; padding:0; font-family:Arial,sans-serif; font-size:3.5mm; height:100%; }
+    html, body { background:linear-gradient(180deg,#eef1f6,#e3e8ef); margin:0; padding:0; font-family:"Noto Sans JP","Hiragino Kaku Gothic ProN",Arial,sans-serif; font-size:3.5mm; height:100%; -webkit-font-smoothing:antialiased; }
     .no-print { display: initial; } .print-text { display: none; }
-    input, select { font-size:3.2mm; padding:.5mm; box-sizing:border-box; font-family:Arial,sans-serif; }
+    input, select { font-size:3.2mm; padding:.5mm; box-sizing:border-box; font-family:"Noto Sans JP",Arial,sans-serif; }
     input[type="date"] { -webkit-appearance:none; appearance:none; line-height:1.2; }
     table input, table input[type="date"], .td-measure-grid input { border:none; outline:none; background:transparent; box-shadow:none; border-radius:0; padding:0 1mm; width:100%; height:100%; box-sizing:border-box; -webkit-appearance:none; appearance:none; }
     table input:focus, table input[type="date"]:focus { outline:none; box-shadow:none; }
 
     @media screen { html, body { display:flex; flex-direction:column; align-items:center; } .b5-preview { margin:12mm 0; } }
     .b5-preview { background:#fff; width:176mm; max-width:98vw; margin:10mm auto; padding:8mm; box-shadow:0 0 5mm rgba(0,0,0,.25); box-sizing:border-box; }
-    h2 { text-align:center; font-size:7mm; margin-bottom:8mm; }
+    h2 { text-align:center; font-size:6.3mm; font-weight:700; letter-spacing:.08em; margin:0 0 7mm; color:#1a1d23; }
     table { width:100%; border-collapse:collapse; margin-bottom:4mm; }
-    th, td { border:.3mm solid #333; padding:1.2mm 1mm; text-align:center; background:#fff; vertical-align:middle; }
-    th { background:#fff; }
+    th, td { border:.18mm solid #d5d9e0; padding:1.35mm 1.4mm; text-align:center; background:#fff; vertical-align:middle; color:#20242c; }
+    th { background:#f3f5f9; font-weight:600; color:#4a505b; }
     .align-left { text-align:left !important; }
-    .section-label { text-align:left; font-weight:bold; background:#fff; }
+    .section-label { text-align:left; font-weight:600; background:#f3f5f9; color:#4a505b; }
     .header-table td, .header-table th { white-space:nowrap; word-break:keep-all; }
     .header-table input { min-width:0; }
 
@@ -48,20 +52,20 @@
     .stamp-layout { display:flex; justify-content:flex-end; margin-top:3mm; }
     .stamp-box { display:flex; flex-direction:column; align-items:center; gap:1.2mm; }
     .company-outside { font-weight:bold; align-self:flex-end; }
-    .signature-box { border:.3mm solid #333; border-radius:2mm; background:#fafbfc; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+    .signature-box { border:.2mm solid #d5d9e0; border-radius:2.5mm; background:#fafbfd; display:flex; align-items:center; justify-content:center; overflow:hidden; }
     .signature-box.big { width:40mm; height:40mm; }
     .signature-box.big img { width:30mm; height:30mm; object-fit:contain; }
     .stamp-label { font-size:3mm; text-align:center; }
     #stampBox[data-visible="0"] #stampMain { display:none; }
 
     .toolbar { position:fixed; top:8px; left:50%; transform:translateX(-50%); display:flex; flex-wrap:wrap; justify-content:center; gap:6px; max-width:96vw; padding:8px 10px; background:rgba(255,255,255,0.92); border:1px solid #ddd; border-radius:12px; box-shadow:0 2px 18px rgba(0,0,0,.12); z-index:9999; backdrop-filter:blur(4px); align-items:center; }
-    .toolbar button { font-family:Arial,sans-serif; font-size:14px; padding:8px 14px; border-radius:8px; border:1px solid #ccc; background:#fff; cursor:pointer; white-space:nowrap; flex:0 0 auto; }
+    .toolbar button { font-family:"Inter","Noto Sans JP",Arial,sans-serif; font-weight:600; font-size:13.5px; padding:8px 15px; border-radius:9px; border:1px solid #dde1e7; background:#fff; cursor:pointer; white-space:nowrap; flex:0 0 auto; color:#2a2f38; }
     .toolbar button:hover { filter:brightness(.96); }
     .toolbar .btn-primary { background:#0a8ffc; border-color:#0a8ffc; color:#fff; font-weight:bold; }
     .toolbar .btn-primary:hover { filter:brightness(1.08); }
     .toolbar .key-badge { font-size:12px; color:#555; white-space:nowrap; }
     .toolbar-menu { position:relative; flex:0 0 auto; }
-    .toolbar-menu summary { list-style:none; cursor:pointer; font-family:Arial,sans-serif; font-size:14px; padding:8px 14px; border-radius:8px; border:1px solid #ccc; background:#fff; white-space:nowrap; }
+    .toolbar-menu summary { list-style:none; cursor:pointer; font-family:"Inter","Noto Sans JP",Arial,sans-serif; font-weight:600; font-size:13.5px; padding:8px 15px; border-radius:9px; border:1px solid #dde1e7; background:#fff; white-space:nowrap; color:#2a2f38; }
     .toolbar-menu summary::-webkit-details-marker{ display:none; }
     .toolbar-menu summary:hover{ filter:brightness(.96); }
     .toolbar-menu[open] summary{ background:#eef6ff; border-color:#0a8ffc; }
@@ -86,7 +90,7 @@
     }
 
     /* Soft highlight */
-    :root{ --soft-bg:#09fcfc; --soft-border:#0a8ffc; }
+    :root{ --soft-bg:#fff7cc; --soft-border:#e5b200; }
     [data-soft-required].pending{ background:var(--soft-bg) !important; box-shadow:inset 0 0 0 1px var(--soft-border) !important; transition: background .15s ease, box-shadow .15s ease; }
     .td-measure-grid input.invalid { background:#ffebee; box-shadow:inset 0 0 0 1px #d32f2f; }
 
@@ -107,10 +111,10 @@
     .header-table .serial-wrap input[name="serial_no_suffix"].pending{ background:var(--soft-bg) !important; box-shadow: inset 0 0 0 1px var(--soft-border) !important; }
 
     /* ===== 検査品 写真セクション ===== */
-    .photo-section{ margin:3mm 0; padding:2mm; border:.3mm dashed #999; border-radius:2mm; }
+    .photo-section{ margin:3mm 0; padding:2.5mm 3mm; border:.2mm solid #d5d9e0; border-radius:3mm; background:#fafbfd; }
     .photo-section-head{ display:flex; align-items:center; gap:3mm; flex-wrap:wrap; }
     .photo-section-head label{ font-weight:bold; }
-    .photo-add-btn{ font-family:Arial,sans-serif; font-size:3.5mm; padding:2mm 4mm; border-radius:2mm; border:1px solid #ccc; background:#fff; cursor:pointer; }
+    .photo-add-btn{ font-family:"Inter","Noto Sans JP",Arial,sans-serif; font-weight:600; font-size:3.4mm; padding:2mm 4mm; border-radius:2.5mm; border:1px solid #d5d9e0; background:#fff; cursor:pointer; color:#2a2f38; }
     .photo-add-btn:active{ filter:brightness(.95); }
     #photoCount{ font-size:3.2mm; color:#555; }
     #photoCount.need{ color:#d32f2f; font-weight:bold; }
@@ -273,8 +277,8 @@
           <div id="companyOutside" class="company-outside">東京精密発條株式会社</div>
           <select id="stampWho" class="no-print">
             <option value="">- 印鑑選択 -</option>
-            <option value="鶴巻（郁）">鶴巻（郁）</option>
-            <option value="秋山">秋山</option>
+            <option value="長谷部">長谷部</option>
+            <option value="都合">都合</option>
           </select>
           <div class="stamp-label print-text"></div>
           <div class="signature-box big"><img id="stampMain" src="" alt=""></div>
@@ -600,8 +604,9 @@
         const fileName = computeFilename();
         const baseName = computeFilenameBase();
         const customer = (document.querySelector('.header-table tr:nth-child(1) td:nth-child(2)')?.textContent || '').trim();
+        const verifyId = makeVerifyId();
 
-        const doc = await buildPdfDoc();
+        const doc = await buildPdfDoc(verifyId);
         const pdfBase64 = await blobToBase64(doc.output('blob'));
 
         const photos = [];
@@ -612,11 +617,11 @@
 
         const judgment = document.querySelector('select[name="final_judgment"]')?.value || '';
         const hinmei = document.getElementById('fieldHinmei')?.textContent || '';
-        const res = await apiGAS({ action:'uploadInspection', app_ns:APP_NS, customer, hinmei, judgment, fileName, pdfBase64, photos });
+        const res = await apiGAS({ action:'uploadInspection', app_ns:APP_NS, customer, hinmei, judgment, fileName, pdfBase64, photos, verifyId });
 
         if(res?.ok){
           alert(`Google Driveに保存しました: ${fileName}\n写真: ${res.savedPhotos ?? photos.length}枚`);
-          postLog('SAVE', `photos:${res.savedPhotos ?? photos.length}`, { fileUrl: res.pdfUrl || '' });
+          postLog('SAVE', `photos:${res.savedPhotos ?? photos.length}`, { fileUrl: res.pdfUrl || '', verifyId });
         } else if (res?.error === 'duplicate'){
           alert(`同じ製造Noのファイルが既に存在します。\n${res.message||''}\n保存を中止しました。`);
         } else {
@@ -656,7 +661,7 @@
             serial_suffix: serialSuffix,
             serial_full: serialFull,
             zuban, customer, hinmei, order_no: orderNo, inputter,
-            file_name: fileName, file_url: extra.fileUrl || '', client_id: clientId, notes
+            file_name: fileName, file_url: extra.fileUrl || '', verify_id: extra.verifyId || '', client_id: clientId, notes
           })
         });
       }catch(e){ console.warn('logSave failed:', e); }
@@ -728,14 +733,45 @@
     function computeFilename(){ return computeFilenameBase() + '.pdf'; }
     async function renderFormCanvas(){
       const el=document.querySelector('.b5-preview');
+      if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch(e){} } // pastikan font custom sudah termuat sebelum di-screenshot
       return html2canvas(el,{ scale:2, backgroundColor:'#FFFFFF', useCORS:true,
         onclone:(doc)=>{ doc.querySelectorAll('.no-print').forEach(e=>e.style.display='none'); doc.querySelectorAll('.print-text').forEach(e=>e.style.display='inline'); }});
     }
-    async function buildPdfDoc(){
+    function makeVerifyId(){
+      return (crypto.randomUUID ? crypto.randomUUID().replace(/-/g,'') : (Date.now().toString(36)+Math.random().toString(36).slice(2)))
+        .slice(0, 10);
+    }
+    function generateVerifyQRDataUrl(verifyId){
+      if (typeof QRCode === 'undefined') return null;
+      const url = `${GAS_URL}?vid=${verifyId}`; // dibuka backend langsung — tidak butuh hosting terpisah
+      const tempDiv = document.createElement('div');
+      tempDiv.style.cssText = 'position:fixed;left:-9999px;top:-9999px;';
+      document.body.appendChild(tempDiv);
+      try{
+        new QRCode(tempDiv, { text: url, width: 160, height: 160, correctLevel: QRCode.CorrectLevel.M });
+        const canvasEl = tempDiv.querySelector('canvas');
+        const dataUrl = canvasEl ? canvasEl.toDataURL('image/png') : (tempDiv.querySelector('img')?.src || null);
+        return dataUrl;
+      } finally {
+        document.body.removeChild(tempDiv);
+      }
+    }
+    async function buildPdfDoc(verifyId){
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a5' });
       const canvas = await renderFormCanvas();
-      doc.addImage(canvas.toDataURL('image/png'), 'PNG', 6, 6, 136, 198);
+      // Konten sedikit dikecilkan (rasio tetap sama) supaya ada ruang bersih
+      // di bawah untuk QR — tidak menimpa isi dokumen.
+      doc.addImage(canvas.toDataURL('image/png'), 'PNG', 11.5, 6, 125, 182);
+      if (verifyId){
+        const qrUrl = generateVerifyQRDataUrl(verifyId);
+        if (qrUrl){
+          doc.addImage(qrUrl, 'PNG', 127, 190, 16, 16);
+          doc.setFontSize(5);
+          doc.setTextColor(120);
+          doc.text('スキャンして認証', 135, 208, { align:'center' });
+        }
+      }
       return doc;
     }
 

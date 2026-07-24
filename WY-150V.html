@@ -3,7 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <title>出荷検査成績書 WY-150V（X3プロテクター）</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0a8ffc" />
+  <link rel="apple-touch-icon" href="tsh.png" onerror="this.remove()">
+  <link rel="icon" href="tsh.png" onerror="this.remove()">
   <!-- PDF libs -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -15,8 +21,10 @@
     table input, table input[type="date"], .td-measure-grid input { border:none; outline:none; background:transparent; box-shadow:none; border-radius:0; padding:0 1mm; width:100%; height:100%; box-sizing:border-box; -webkit-appearance:none; appearance:none; }
     table input:focus, table input[type="date"]:focus { outline:none; box-shadow:none; }
 
-    @media screen { html, body { display:flex; flex-direction:column; align-items:center; } .b5-preview { margin:12mm 0; } }
-    .b5-preview { background:#fff; width:176mm; max-width:98vw; margin:10mm auto; padding:8mm; box-shadow:0 0 5mm rgba(0,0,0,.25); box-sizing:border-box; }
+    @media screen { html, body { display:flex; flex-direction:column; align-items:center; background:#dde3ec; } }
+    .preview-zoom-wrap{ width:100%; display:flex; justify-content:center; }
+    .b5-preview { background:#fff; width:176mm; margin:14mm auto 10mm; padding:8mm; box-shadow:0 0 5mm rgba(0,0,0,.25); box-sizing:border-box; }
+    @media print { .preview-zoom-wrap{ display:block !important; } }
     h2 { text-align:center; font-size:7mm; margin-bottom:8mm; }
     table { width:100%; border-collapse:collapse; margin-bottom:4mm; }
     th, td { border:.3mm solid #333; padding:1.2mm 1mm; text-align:center; background:#fff; vertical-align:middle; }
@@ -64,7 +72,7 @@
     @media (max-width:560px){ .toolbar{ top:6px; gap:5px; padding:6px 8px; } .toolbar button, .toolbar-menu summary{ padding:7px 10px; font-size:13px; } }
 
     @media print {
-      @page { size:B5 portrait; margin:12mm; }
+      @page { size:A5 portrait; margin:8mm; }
       html, body { background:none !important; margin:0 !important; padding:0 !important; }
       .toolbar { display:none !important; }
       .b5-preview { width:100%; margin:0; padding:0; box-shadow:none; box-sizing:border-box; transform:scale(0.97); transform-origin:top left; }
@@ -152,6 +160,7 @@
 
   <!-- form -->
   <form id="inspection-form">
+    <div class="preview-zoom-wrap">
     <div class="b5-preview">
       <h2>出荷検査成績書</h2>
       <table class="header-table">
@@ -167,13 +176,13 @@
           </td>
         </tr>
         <tr>
-          <td class="section-label">機種</td><td class="align-left">WY-150V</td>
+          <td class="section-label">機種</td><td class="align-left" id="fieldKikishu">WY-150V</td>
           <td class="section-label">品番</td><td>J21*4016013BB</td>
           <td class="section-label">図番</td>
           <td><input type="text" name="zuban" value="3596-70" class="soft-required" data-soft-required="1" /></td>
         </tr>
         <tr>
-          <td class="section-label">品名</td><td class="align-left">X3プロテクター</td>
+          <td class="section-label">品名</td><td class="align-left" id="fieldHinmei">X3プロテクター</td>
           <td class="section-label">製造日</td>
           <td class="align-left">
             <input type="date" name="makingdate" class="no-print soft-required" data-soft-required="1" />
@@ -195,10 +204,7 @@
         <select name="inputter" class="soft-required" data-soft-required="1">
           <option value="">- 選択してください -</option>
           <option value="長谷部">長谷部</option>
-          <option value="都合">都合</option>
-          <option value="石橋">石橋</option>
-          <option value="ワーユ">ワーユ</option>
-          <option value="ユスフ">ユスフ</option>
+          <option value="東郷">東郷</option>
         </select>
       </div>
 
@@ -249,12 +255,8 @@
           <div id="companyOutside" class="company-outside">東京精密発條株式会社</div>
           <select id="stampWho" class="no-print">
             <option value="">- 印鑑選択 -</option>
-            <option value="中川部長">中川部長</option>
-            <option value="長谷部">長谷部</option>
-            <option value="石橋">石橋</option>
-            <option value="都合">都合</option>
-            <option value="ワーユ">ワーユ</option>
-            <option value="ユスフ">ユスフ</option>
+            <option value="鶴巻（郁）">鶴巻（郁）</option>
+            <option value="秋山">秋山</option>
           </select>
           <div class="stamp-label print-text"></div>
           <div class="signature-box big"><img id="stampMain" src="" alt=""></div>
@@ -262,12 +264,13 @@
       </div>
       <!-- ===================== -->
     </div>
+    </div>
   </form>
 
   <script>
     /* ===== CONFIG (server tunggal) ===== */
     const APP_NS  = 'wy150v_x3';
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxS2x82HUV6wBw9uZUwRw_2u8LcBhQiol8FZsGxoN_X-CywGMffWHJRMQMMkrNXqaq0Gg/exec'; // ← isi setelah deploy Code_gs_BARU.gs (lihat "CARA PASANG" di file .gs)
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxS2x82HUV6wBw9uZUwRw_2u8LcBhQiol8FZsGxoN_X-CywGMffWHJRMQMMkrNXqaq0Gg/exec';
     const ACTIVE_PREFIX_KEY = 'kensa_prefix'; // admin override (6 digit + '-')
     const COMPANY_LABEL = '東京精密発條株式会社';
     const serverPrefix = () => `${APP_NS}::${getSerialPrefix()}`;
@@ -694,24 +697,46 @@
     function computeFilenameBase(){
       const md=document.querySelector('input[name="makingdate"]').value;
       const ymd = md ? md.replace(/-/g,'') : (()=>{const t=new Date(); return t.getFullYear()+String(t.getMonth()+1).padStart(2,'0')+String(t.getDate()).padStart(2,'0');})();
-      const hm = nowHHMM();
       const customer = sanitize(document.querySelector('.header-table tr:nth-child(1) td:nth-child(2)')?.textContent || 'no-customer');
-      const zuban    = sanitize(document.querySelector('input[name="zuban"]').value || 'no-zuban');
-      const inputter = sanitize(document.querySelector('select[name="inputter"]').value || 'no-name');
+      const hinmei   = sanitize(document.getElementById('fieldHinmei')?.textContent || 'no-item');
       const serialNo = sanitize(getSerialFull() || 'no-serial');
-      return `${ymd}-${hm}_${customer}_${zuban}_${inputter}_${serialNo}`;
+      return `${customer}_${hinmei}_${serialNo}_${ymd}`;
     }
     function computeFilename(){ return computeFilenameBase() + '.pdf'; }
     async function renderFormCanvas(){
       const el=document.querySelector('.b5-preview');
-      return html2canvas(el,{ scale:2, backgroundColor:'#FFFFFF', useCORS:true,
-        onclone:(doc)=>{ doc.querySelectorAll('.no-print').forEach(e=>e.style.display='none'); doc.querySelectorAll('.print-text').forEach(e=>e.style.display='inline'); }});
+      const prevTransform = el.style.transform; // amankan dari zoom-fit tablet/HP saat capture
+      el.style.transform = 'none';
+      try{
+        return await html2canvas(el,{ scale:2, backgroundColor:'#FFFFFF', useCORS:true,
+          onclone:(doc)=>{ doc.querySelectorAll('.no-print').forEach(e=>e.style.display='none'); doc.querySelectorAll('.print-text').forEach(e=>e.style.display='inline'); }});
+      } finally {
+        el.style.transform = prevTransform;
+      }
     }
+
+    /* ===== Zoom otomatis supaya pas di layar tablet/HP (tidak memengaruhi hasil cetak) ===== */
+    function fitPreviewToViewport(){
+      const wrap = document.querySelector('.preview-zoom-wrap');
+      const el = document.querySelector('.b5-preview');
+      if(!wrap || !el) return;
+      el.style.transform = 'none';
+      const naturalWidth = el.offsetWidth;
+      const naturalHeight = el.offsetHeight;
+      if(!naturalWidth) return;
+      const available = window.innerWidth - 16;
+      const scale = Math.min(1, available / naturalWidth);
+      el.style.transformOrigin = 'top center';
+      el.style.transform = scale < 0.999 ? `scale(${scale})` : 'none';
+      wrap.style.height = Math.ceil(naturalHeight * scale) + 'px';
+    }
+    window.addEventListener('resize', fitPreviewToViewport);
+    window.addEventListener('orientationchange', ()=>setTimeout(fitPreviewToViewport,150));
     async function buildPdfDoc(){
       const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'b5' });
+      const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a5' });
       const canvas = await renderFormCanvas();
-      doc.addImage(canvas.toDataURL('image/png'), 'PNG', 7, 7, 162, 236);
+      doc.addImage(canvas.toDataURL('image/png'), 'PNG', 6, 6, 136, 198);
       return doc;
     }
 
@@ -941,6 +966,8 @@
       updateDynamicSeal();
 
       await ensureHasLockOrAcquire();
+      fitPreviewToViewport();
+      setTimeout(fitPreviewToViewport, 300); // ulang setelah font Jepang selesai load
     });
     window.addEventListener('beforeunload', releaseSharedLock);
   </script>

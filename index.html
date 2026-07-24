@@ -55,6 +55,13 @@
     font-size:23px; font-weight:800; margin:0 0 6px; letter-spacing:-.01em;
   }
   .header p{ margin:0; color:var(--sub); font-size:13.5px; font-weight:500; }
+  .quick-nav{ display:flex; gap:10px; margin-top:14px; }
+  .quick-nav a{
+    font-size:12.5px; font-weight:600; color:var(--accent); text-decoration:none;
+    padding:7px 14px; border-radius:999px; background:var(--card); border:1px solid var(--line);
+    box-shadow:var(--shadow-sm); transition:box-shadow .12s ease, transform .12s ease;
+  }
+  .quick-nav a:hover{ box-shadow:var(--shadow-md); transform:translateY(-1px); }
 
   /* ---------- Search ---------- */
   .search-box{ position:sticky; top:0; padding:16px 0 14px; z-index:5;
@@ -120,6 +127,10 @@
       </div>
       <h1>出荷検査成績書 ポータル</h1>
       <p>客先・機種・品名で検索、またはタップして絞り込み</p>
+      <div class="quick-nav">
+        <a href="riwayat.html">📚 検査履歴</a>
+        <a href="dashboard.html">📊 ダッシュボード</a>
+      </div>
     </div>
 
     <div class="search-box">

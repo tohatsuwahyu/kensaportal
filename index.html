@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<title>出荷検査成績書 ポータル</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" href="tsh.png" onerror="this.remove()">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --accent:#1b5fd6;
+    --accent-2:#3b82f6;
+    --ink:#161b22;
+    --sub:#68707c;
+    --line:#e7e9ee;
+    --bg-1:#eef2f8;
+    --bg-2:#e4ebf6;
+    --card:#ffffff;
+    --radius-lg:20px;
+    --radius-md:14px;
+    --shadow-sm:0 1px 2px rgba(20,30,50,.05), 0 1px 1px rgba(20,30,50,.04);
+    --shadow-md:0 8px 24px rgba(20,30,60,.08);
+    --shadow-lg:0 16px 40px rgba(20,30,60,.14);
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; min-height:100%; }
+  body{
+    font-family:"Inter","Noto Sans JP",-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1100px 500px at 12% -10%, #dbe7fb 0%, transparent 60%),
+      radial-gradient(900px 500px at 110% 10%, #e7f0ff 0%, transparent 55%),
+      linear-gradient(180deg, var(--bg-1), var(--bg-2));
+    min-height:100vh;
+  }
+
+  .wrap{ max-width:860px; margin:0 auto; padding:36px 20px 70px; }
+
+  /* ---------- Header ---------- */
+  .header{ display:flex; flex-direction:column; align-items:center; text-align:center; padding:10px 0 26px; }
+  .logo-wrap{
+    width:64px; height:64px; border-radius:18px; background:var(--card);
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+    box-shadow:var(--shadow-md); margin-bottom:16px; position:relative;
+  }
+  .logo-img{ width:100%; height:100%; object-fit:contain; padding:8px; display:block; }
+  .logo-fallback{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff;
+    font-weight:800; font-size:18px; letter-spacing:.5px;
+  }
+  .header h1{
+    font-size:23px; font-weight:800; margin:0 0 6px; letter-spacing:-.01em;
+  }
+  .header p{ margin:0; color:var(--sub); font-size:13.5px; font-weight:500; }
+
+  /* ---------- Search ---------- */
+  .search-box{ position:sticky; top:0; padding:16px 0 14px; z-index:5;
+    background:linear-gradient(180deg, var(--bg-1) 78%, rgba(238,242,248,0)); }
+  .search-input-wrap{ position:relative; }
+  .search-input-wrap input{
+    width:100%; font-family:inherit; font-size:15.5px; font-weight:500;
+    padding:15px 16px 15px 46px; border-radius:16px; border:1px solid var(--line);
+    background:var(--card); box-shadow:var(--shadow-sm); outline:none;
+    transition:box-shadow .15s ease, border-color .15s ease;
+  }
+  .search-input-wrap input::placeholder{ color:#9aa2ad; font-weight:400; }
+  .search-input-wrap input:focus{ border-color:var(--accent); box-shadow:0 0 0 4px rgba(27,95,214,.12), var(--shadow-sm); }
+  .search-icon{ position:absolute; left:16px; top:50%; transform:translateY(-50%); font-size:16px; opacity:.45; pointer-events:none; }
+
+  .chips{ display:flex; gap:8px; overflow-x:auto; padding:12px 2px 2px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  .chips::-webkit-scrollbar{ display:none; }
+  .chip{
+    flex:0 0 auto; padding:8px 15px; border-radius:999px; border:1px solid var(--line); background:var(--card);
+    font-size:12.5px; font-weight:600; color:var(--sub); cursor:pointer; white-space:nowrap; user-select:none;
+    box-shadow:var(--shadow-sm); transition:all .15s ease;
+  }
+  .chip:hover{ border-color:#c9d4e8; }
+  .chip.active{ background:linear-gradient(135deg,var(--accent),var(--accent-2)); border-color:transparent; color:#fff; box-shadow:0 6px 16px rgba(27,95,214,.28); }
+
+  .result-count{ font-size:12px; font-weight:600; color:var(--sub); margin:14px 4px 8px; letter-spacing:.01em; }
+
+  /* ---------- List ---------- */
+  .list{ display:flex; flex-direction:column; gap:10px; }
+  .card{
+    display:flex; align-items:center; gap:14px; background:var(--card); border-radius:var(--radius-md);
+    padding:14px 16px; box-shadow:var(--shadow-sm); text-decoration:none; color:inherit; border:1px solid var(--line);
+    transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+  }
+  .card:hover{ box-shadow:var(--shadow-md); border-color:#d3ddf0; transform:translateY(-1px); }
+  .card:active{ transform:scale(.985); }
+  .card-icon{
+    flex:0 0 auto; width:44px; height:44px; border-radius:12px;
+    background:linear-gradient(135deg,#eaf1ff,#f3f7ff); color:var(--accent);
+    display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:800;
+    border:1px solid #dde6f9;
+  }
+  .card-main{ flex:1 1 auto; min-width:0; }
+  .card-customer{ font-size:11.5px; font-weight:600; color:var(--accent); margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:.01em; }
+  .card-title{ font-size:15.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .card-sub{ font-size:12.5px; color:var(--sub); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .card-arrow{ flex:0 0 auto; color:#c3ccdb; font-size:20px; transition:transform .12s ease, color .12s ease; }
+  .card:hover .card-arrow{ transform:translateX(2px); color:var(--accent); }
+
+  .empty{ text-align:center; color:var(--sub); padding:60px 10px; font-size:14px; }
+  .empty .big{ font-size:34px; margin-bottom:10px; opacity:.7; }
+
+  .footer{ text-align:center; margin-top:44px; font-size:11.5px; color:#a2aab5; font-weight:500; letter-spacing:.02em; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <div class="logo-wrap">
+        <img class="logo-img" id="logoImg" src="tsh.png" alt="logo"
+             onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='flex';">
+        <div class="logo-fallback" id="logoFallback" style="display:none;">TSH</div>
+      </div>
+      <h1>出荷検査成績書 ポータル</h1>
+      <p>客先・機種・品名で検索、またはタップして絞り込み</p>
+    </div>
+
+    <div class="search-box">
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input id="searchInput" type="text" placeholder="客先・機種・品名・図番で検索…" autocomplete="off" />
+      </div>
+      <div id="chips" class="chips"></div>
+    </div>
+
+    <div id="resultCount" class="result-count"></div>
+    <div id="list" class="list"></div>
+    <div id="emptyState" class="empty" style="display:none;">
+      <div class="big">🔍</div>
+      該当するフォームが見つかりません。<br>検索キーワードを変えてお試しください。
+    </div>
+
+    <div class="footer">出荷検査成績書システム</div>
+  </div>
+
+  <script>
+    /* =====================================================================
+       ここに新しいフォームを1行ずつ追加してください（コピペでOK）:
+       { customer:'客先名', kikishu:'機種', hinmei:'品名', zuban:'図番', file:'ファイル名.html' }
+       ===================================================================== */
+    const FORM_REGISTRY = [
+      { customer:'中村留精密工業㈱', kikishu:'WY-150V', hinmei:'X3プロテクター', zuban:'3596-70', file:'WY-150V.html' },
+      { customer:'オークマ株式会社',   kikishu:'MB-46V',  hinmei:'Y軸SG',          zuban:'2825-20', file:'MB-46V.html' },
+      // 例（コピーして書き換えてください）:
+      // { customer:'〇〇工業㈱', kikishu:'AB-100', hinmei:'カバー', zuban:'1234-56', file:'AB-100.html' },
+    ];
+    /* ===================================================================== */
+
+    const searchInput = document.getElementById('searchInput');
+    const chipsEl = document.getElementById('chips');
+    const listEl = document.getElementById('list');
+    const emptyEl = document.getElementById('emptyState');
+    const countEl = document.getElementById('resultCount');
+
+    let activeCustomer = null;
+
+    function initials(str){ const s=(str||'').trim(); return s ? s[0] : '?'; }
+
+    function buildChips(){
+      const customers = [...new Set(FORM_REGISTRY.map(f => f.customer))].sort((a,b)=>a.localeCompare(b,'ja'));
+      chipsEl.innerHTML = '';
+      const allChip = document.createElement('div');
+      allChip.className = 'chip active';
+      allChip.textContent = `すべて (${FORM_REGISTRY.length})`;
+      allChip.onclick = () => { activeCustomer = null; render(); };
+      chipsEl.appendChild(allChip);
+      customers.forEach(c => {
+        const n = FORM_REGISTRY.filter(f => f.customer === c).length;
+        const chip = document.createElement('div');
+        chip.className = 'chip';
+        chip.textContent = `${c} (${n})`;
+        chip.dataset.customer = c;
+        chip.onclick = () => { activeCustomer = c; render(); };
+        chipsEl.appendChild(chip);
+      });
+    }
+
+    function updateChipStyles(){
+      Array.from(chipsEl.children).forEach(chip => {
+        const isAll = !chip.dataset.customer;
+        chip.classList.toggle('active', isAll ? activeCustomer === null : chip.dataset.customer === activeCustomer);
+      });
+    }
+
+    function matches(entry, q){
+      if(!q) return true;
+      const hay = `${entry.customer} ${entry.kikishu} ${entry.hinmei} ${entry.zuban}`.toLowerCase();
+      return hay.includes(q.toLowerCase());
+    }
+
+    function render(){
+      updateChipStyles();
+      const q = searchInput.value.trim();
+      const filtered = FORM_REGISTRY.filter(f => (activeCustomer === null || f.customer === activeCustomer) && matches(f, q));
+
+      countEl.textContent = `${filtered.length} 件`;
+      listEl.innerHTML = '';
+
+      if(filtered.length === 0){ emptyEl.style.display = 'block'; return; }
+      emptyEl.style.display = 'none';
+
+      filtered
+        .sort((a,b)=> a.customer.localeCompare(b.customer,'ja') || a.kikishu.localeCompare(b.kikishu,'ja'))
+        .forEach(f => {
+          const a = document.createElement('a');
+          a.className = 'card';
+          a.href = f.file;
+          a.innerHTML = `
+            <div class="card-icon">${initials(f.kikishu)}</div>
+            <div class="card-main">
+              <div class="card-customer">${f.customer}</div>
+              <div class="card-title">${f.kikishu}　${f.hinmei}</div>
+              <div class="card-sub">図番: ${f.zuban || '—'}</div>
+            </div>
+            <div class="card-arrow">›</div>
+          `;
+          listEl.appendChild(a);
+        });
+    }
+
+    searchInput.addEventListener('input', render);
+    buildChips();
+    render();
+    searchInput.focus();
+  </script>
+</body>
+</html>

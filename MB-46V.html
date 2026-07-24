@@ -3,7 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <title>出荷検査成績書（MB-46V／Y軸）</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0a8ffc" />
+  <link rel="apple-touch-icon" href="tsh.png" onerror="this.remove()">
+  <link rel="icon" href="tsh.png" onerror="this.remove()">
   <!-- PDF libs -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -17,8 +23,10 @@
       width:100%; height:100%; box-sizing:border-box; -webkit-appearance:none; appearance:none;
     }
     table input:focus, table input[type="date"]:focus { outline:none; box-shadow:none; }
-    @media screen { html, body { display:flex; flex-direction:column; align-items:center; } .b5-preview { margin:12mm 0; } }
-    .b5-preview { background:#fff; width:176mm; max-width:98vw; margin:10mm auto; padding:8mm; box-shadow:0 0 5mm rgba(0,0,0,.25); box-sizing:border-box; }
+    @media screen { html, body { display:flex; flex-direction:column; align-items:center; background:#dde3ec; } }
+    .preview-zoom-wrap{ width:100%; display:flex; justify-content:center; }
+    .b5-preview { background:#fff; width:176mm; margin:14mm auto 10mm; padding:8mm; box-shadow:0 0 5mm rgba(0,0,0,.25); box-sizing:border-box; }
+    @media print { .preview-zoom-wrap{ display:block !important; } }
     h2 { text-align:center; font-size:7mm; margin-bottom:8mm; }
 
     table { width:100%; border-collapse:collapse; margin-bottom:4mm; }
@@ -39,14 +47,16 @@
     .inputter-row label { width:12mm; font-weight:bold; }
     .inputter-row select { width:30%; }
 
-    .stamp-box-row { display:flex; justify-content:flex-end; gap:4mm; margin-top:3mm; }
+    .stamp-box-row { display:flex; justify-content:flex-end; gap:5mm; margin-top:3mm; }
     .stamp-box-row>div { display:flex; flex-direction:column; align-items:center; }
     .stamp-label { font-size:3mm; margin-bottom:1mm; text-align:center; }
     .signature-box {
-      width:15mm; height:15mm; border:.3mm solid #333; border-radius:2mm;
+      width:26mm; height:26mm; border:.3mm solid #333; border-radius:2mm;
       background:#fff; display:flex; align-items:center; justify-content:center; overflow:hidden;
     }
-    .signature-box img { width:9mm; height:9mm; object-fit:contain; }
+    .signature-box img { width:22mm; height:22mm; object-fit:contain; }
+    #stampBox1[data-visible="0"] #stampMain1{ display:none; }
+    #stampBox2[data-visible="0"] #stampMain2{ display:none; }
 
     .company-name { text-align:right; margin:2mm 1mm 0; font-weight:bold; }
     .order-no-row .section-label { width:15%; } .order-no-row .data { width:85%; }
@@ -66,7 +76,7 @@
     @media (max-width:560px){ .toolbar{ top:6px; gap:5px; padding:6px 8px; } .toolbar button, .toolbar-menu summary{ padding:7px 10px; font-size:13px; } }
 
     @media print {
-      @page { size:B5 portrait; margin:12mm; }
+      @page { size:A5 portrait; margin:8mm; }
       html, body { background:none !important; margin:0 !important; padding:0 !important; }
       .toolbar { display:none !important; }
       .b5-preview { width:100%; margin:0; padding:0; box-shadow:none; box-sizing:border-box; transform:scale(0.97); transform-origin:top left; }
@@ -143,6 +153,7 @@
   </div>
 
   <form id="inspection-form">
+    <div class="preview-zoom-wrap">
     <div class="b5-preview">
       <h2>出荷検査成績書</h2>
 
@@ -158,7 +169,7 @@
         </tr>
 
         <tr>
-          <td class="section-label">機種</td><td class="ta-left">MB-46V</td>
+          <td class="section-label">機種</td><td class="ta-left" id="fieldKikishu">MB-46V</td>
           <td class="section-label">品番</td><td>H1090-0021-02-5</td>
 
           <td class="section-label">図番</td>
@@ -166,7 +177,7 @@
         </tr>
 
         <tr>
-          <td class="section-label">品名</td><td class="ta-left">Y軸SG</td>
+          <td class="section-label">品名</td><td class="ta-left" id="fieldHinmei">Y軸SG</td>
           <td class="section-label">製造日</td>
           <td class="ta-left">
             <input type="date" name="makingdate" class="no-print soft-required" data-soft-required="1" />
@@ -245,47 +256,82 @@
 
       <div class="company-name">東京精密発條株式会社</div>
       <div class="stamp-box-row">
-        <div>
-          <select class="no-print" onchange="updateStampPreview('stamp1',this.value)">
+        <div class="stamp-box" id="stampBox1" data-visible="0">
+          <select class="no-print" id="stampWho1" onchange="updateDynamicSeal(1)">
             <option value="">- 印鑑選択 -</option>
-            <option value="nakagawa.png">中川部長</option>
-            <option value="hasebe.png">長谷部</option>
-            <option value="ishibashi.png">石橋</option>
-            <option value="togo.png">都合</option>
-            <option value="wahyu.png">ワーユ</option>
-            <option value="yusuf.png">ユスフ</option>
+            <option value="鶴巻（郁）">鶴巻（郁）</option>
+            <option value="秋山">秋山</option>
           </select>
           <div class="stamp-label">検印</div>
-          <div class="signature-box"><img id="stamp1" src="" alt=""></div>
+          <div class="signature-box"><img id="stampMain1" src="" alt=""></div>
         </div>
-        <div>
-          <select class="no-print" onchange="updateStampPreview('stamp2',this.value)">
+        <div class="stamp-box" id="stampBox2" data-visible="0">
+          <select class="no-print" id="stampWho2" onchange="updateDynamicSeal(2)">
             <option value="">- 印鑑選択 -</option>
-            <option value="nakagawa.png">中川部長</option>
-            <option value="hasebe.png">長谷部</option>
-            <option value="ishibashi.png">石橋</option>
-            <option value="togo.png">都合</option>
-            <option value="wahyu.png">ワーユ</option>
-            <option value="yusuf.png">ユスフ</option>
+            <option value="鶴巻（郁）">鶴巻（郁）</option>
+            <option value="秋山">秋山</option>
           </select>
           <div class="stamp-label">検査印</div>
-          <div class="signature-box"><img id="stamp2" src="" alt=""></div>
+          <div class="signature-box"><img id="stampMain2" src="" alt=""></div>
         </div>
       </div>
+    </div>
     </div>
   </form>
 
   <script>
     /* ===== CONFIG ===== */
     const APP_NS  = 'mb46v';
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxS2x82HUV6wBw9uZUwRw_2u8LcBhQiol8FZsGxoN_X-CywGMffWHJRMQMMkrNXqaq0Gg/exec'; // ← isi setelah deploy Code_gs_BARU.gs (lihat "CARA PASANG" di file .gs)
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxS2x82HUV6wBw9uZUwRw_2u8LcBhQiol8FZsGxoN_X-CywGMffWHJRMQMMkrNXqaq0Gg/exec';
     const ACTIVE_PREFIX_KEY = 'kensa_prefix'; // admin override
     const serverPrefix = () => `${APP_NS}::${getSerialPrefix()}`;
     const SERIAL_SCOPE = () => `okuma:serial:${APP_NS}:${getSerialPrefix() || '282520-'}`;
     let PAD_DIGITS = 4;
 
     /* ===== UI helpers ===== */
-    function updateStampPreview(id, src){ document.getElementById(id).src = src || ''; }
+    const COMPANY_LABEL = '東京精密発條株式会社';
+    const INK = '#d42828';
+    function formatSealYMD(ymd){ if(!ymd) return ''; const [y,m,d] = ymd.split('-'); return `${y}.${m}.${d}`; }
+    function drawArcText(ctx, text, cx, cy, radius, startDeg, endDeg){
+      const chars = Array.from(text); if (!chars.length) return;
+      const start = startDeg * Math.PI/180, end = endDeg * Math.PI/180, step = (end - start) / (chars.length - 1);
+      ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      for (let i=0;i<chars.length;i++){
+        const a = start + step*i, x = cx + radius*Math.cos(a), y = cy + radius*Math.sin(a);
+        ctx.save(); ctx.translate(x,y); ctx.rotate(a + (Math.sin(a) >= 0 ? -Math.PI/2 : Math.PI/2)); ctx.fillText(chars[i],0,0); ctx.restore();
+      }
+      ctx.restore();
+    }
+    function renderRedSealPNG({ name='', ymd='', size=360, company='東京精密発條株式会社' }){
+      const dpr = Math.max(2, window.devicePixelRatio || 1), c = document.createElement('canvas'); c.width=size*dpr; c.height=size*dpr;
+      const g = c.getContext('2d'); g.scale(dpr,dpr);
+      const cx=size/2, cy=size/2, R=size*0.45; g.fillStyle=INK; g.strokeStyle=INK; g.textAlign='center'; g.textBaseline='middle';
+      const circleStroke = Math.max(1, size*0.016); g.lineWidth = circleStroke; g.beginPath(); g.arc(cx,cy,R - circleStroke/2,0,Math.PI*2); g.stroke();
+      const HEAD_KANJI_SIZE = Math.round(size * 0.16); g.font=`800 ${HEAD_KANJI_SIZE}px "Yu Mincho","Hiragino Mincho ProN","MS Mincho",serif`; g.fillText('検査合格', cx, cy - size*0.225);
+      const bandH=size*0.14, y1=cy-bandH/2, y2=cy+bandH/2; g.lineWidth=Math.max(1, size*0.009);
+      g.beginPath(); g.moveTo(cx-R*0.78,y1); g.lineTo(cx+R*0.78,y1); g.stroke();
+      g.beginPath(); g.moveTo(cx-R*0.78,y2); g.lineTo(cx+R*0.78,y2); g.stroke();
+      const dateStr = formatSealYMD(ymd);
+      if (dateStr) { g.font = `900 ${Math.round(size*0.16)}px "Yu Mincho","Yu Gothic",sans-serif`; g.fillText(dateStr, cx, cy); }
+      if(name){ const nameY = cy + size * 0.185; g.font=`700 ${Math.round(size*0.12)}px "Yu Mincho","MS Mincho",serif`; g.fillText(name, cx, nameY); }
+      const innerMargin = size * 0.028, companyRadius = R - circleStroke - innerMargin;
+      g.font=`700 ${Math.round(size*0.095)}px "Yu Mincho","MS Mincho",serif`;
+      drawArcText(g, company, cx, cy, companyRadius, 160, 20);
+      return c.toDataURL('image/png');
+    }
+    // slot: 1 (検印) atau 2 (検査印) — dua stempel independen
+    function updateDynamicSeal(slot){
+      const whoSel = document.getElementById('stampWho'+slot);
+      const who = whoSel ? whoSel.value.trim() : '';
+      const box = document.getElementById('stampBox'+slot);
+      const img = document.getElementById('stampMain'+slot);
+      if (!who) { if (img) img.src = ''; box?.setAttribute('data-visible','0'); return; }
+      box?.setAttribute('data-visible','1');
+      const ymd = document.querySelector('input[name="hakkohiduke"]')?.value || '';
+      const url = renderRedSealPNG({ name: who, ymd, company: COMPANY_LABEL });
+      if (img) img.src = url || '';
+    }
+    function updateAllSeals(){ updateDynamicSeal(1); updateDynamicSeal(2); }
     function clearAllFields(){
       const form = document.getElementById('inspection-form');
       const keepPrefix = getSerialPrefix();
@@ -293,7 +339,9 @@
       const keepSuffixNum = parseInt(keepSuffixRaw.replace(/[^\d]/g,''), 10);
 
       form.reset();
-      ['stamp1','stamp2'].forEach(id => document.getElementById(id).src = '');
+      ['stampMain1','stampMain2'].forEach(id => { const el=document.getElementById(id); if(el) el.src=''; });
+      document.getElementById('stampBox1')?.setAttribute('data-visible','0');
+      document.getElementById('stampBox2')?.setAttribute('data-visible','0');
       form.querySelectorAll('.td-measure-grid input.invalid').forEach(el => el.classList.remove('invalid'));
 
       wireDateMirror(); wireEnterNavigationAll(); wireSerialMirror(); wireSoftRequired(); markSoftRequired();
@@ -504,7 +552,7 @@
         const span=document.querySelector(`.print-text[data-from="${inp.name}"]`); if(!span) return;
         const fmt=v=>v?v.replace(/(\d{4})-(\d{2})-(\d{2})/,'$1/$2/$3'):'';
         const upd=()=>span.textContent=fmt(inp.value);
-        inp.addEventListener('change',()=>{ upd(); markSoftRequired(); }); upd();
+        inp.addEventListener('change',()=>{ upd(); markSoftRequired(); updateAllSeals(); }); upd();
       });
     }
     function markSoftRequired(){
@@ -709,25 +757,46 @@ if (!prefixReady()) { applyPrefix(); if (!prefixReady()) return false; }
     function computeFilenameBase(){
       const md=document.querySelector('input[name="makingdate"]').value;
       const ymd = md ? md.replace(/-/g,'') : (()=>{const t=new Date(); return t.getFullYear()+String(t.getMonth()+1).padStart(2,'0')+String(t.getDate()).padStart(2,'0');})();
-      const hm = nowHHMM();
       const customer = sanitize(document.querySelector('.header-table tr:nth-child(1) td:nth-child(2)')?.textContent || 'no-customer');
-      const zuban    = sanitize(document.querySelector('input[name="zuban"]').value || 'no-zuban');
-      const inputter = sanitize(document.querySelector('select[name="inputter"]').value || 'no-name');
-      const orderNo  = sanitize(document.querySelector('input[name="order_no"]').value || 'no-order');
+      const hinmei   = sanitize(document.getElementById('fieldHinmei')?.textContent || 'no-item');
       const serialNo = sanitize(getSerialFull() || 'no-serial');
-      return `${ymd}-${hm}_${customer}_${zuban}_${inputter}_${orderNo}_${serialNo}`;
+      return `${customer}_${hinmei}_${serialNo}_${ymd}`;
     }
     function computeFilename(){ return computeFilenameBase() + '.pdf'; }
     async function renderFormCanvas(){
       const el=document.querySelector('.b5-preview');
-      return html2canvas(el,{ scale:2, backgroundColor:'#FFFFFF', useCORS:true,
-        onclone:(doc)=>{ doc.querySelectorAll('.no-print').forEach(e=>e.style.display='none'); doc.querySelectorAll('.print-text').forEach(e=>e.style.display='inline'); }});
+      const prevTransform = el.style.transform; // amankan dari zoom-fit tablet/HP saat capture
+      el.style.transform = 'none';
+      try{
+        return await html2canvas(el,{ scale:2, backgroundColor:'#FFFFFF', useCORS:true,
+          onclone:(doc)=>{ doc.querySelectorAll('.no-print').forEach(e=>e.style.display='none'); doc.querySelectorAll('.print-text').forEach(e=>e.style.display='inline'); }});
+      } finally {
+        el.style.transform = prevTransform;
+      }
     }
+
+    /* ===== Zoom otomatis supaya pas di layar tablet/HP (tidak memengaruhi hasil cetak) ===== */
+    function fitPreviewToViewport(){
+      const wrap = document.querySelector('.preview-zoom-wrap');
+      const el = document.querySelector('.b5-preview');
+      if(!wrap || !el) return;
+      el.style.transform = 'none';
+      const naturalWidth = el.offsetWidth;
+      const naturalHeight = el.offsetHeight;
+      if(!naturalWidth) return;
+      const available = window.innerWidth - 16;
+      const scale = Math.min(1, available / naturalWidth);
+      el.style.transformOrigin = 'top center';
+      el.style.transform = scale < 0.999 ? `scale(${scale})` : 'none';
+      wrap.style.height = Math.ceil(naturalHeight * scale) + 'px';
+    }
+    window.addEventListener('resize', fitPreviewToViewport);
+    window.addEventListener('orientationchange', ()=>setTimeout(fitPreviewToViewport,150));
     async function buildPdfDoc(){
       const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'b5' });
+      const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a5' });
       const canvas = await renderFormCanvas();
-      doc.addImage(canvas.toDataURL('image/png'), 'PNG', 7, 7, 162, 236);
+      doc.addImage(canvas.toDataURL('image/png'), 'PNG', 6, 6, 136, 198);
       return doc;
     }
     async function printViaPDF(){
@@ -875,6 +944,8 @@ if (!prefixReady()) { applyPrefix(); if (!prefixReady()) return false; }
       }catch(e){}
 
       await ensureHasLockOrAcquire();
+      fitPreviewToViewport();
+      setTimeout(fitPreviewToViewport, 300); // ulang setelah font Jepang selesai load
     });
 
     function setTodayIfEmpty(name){

@@ -4,54 +4,79 @@
 <meta charset="UTF-8" />
 <title>監査ログ — 出荷検査成績書</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5, viewport-fit=cover" />
-<meta name="theme-color" content="#14181f" />
+<meta name="theme-color" content="#0b0e14" />
 <link rel="icon" href="tsh.png" onerror="this.remove()">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#14181f; --ink-soft:#3d4451; --sub:#7a8291; --faint:#a5abb6;
-    --line:#e7e9ee; --line-soft:#f0f1f4; --bg:#f7f8fa; --card:#ffffff;
-    --accent:#2451c4; --accent-soft:#eef2fc;
-    --green:#1b7a4a; --green-bg:#e9f6ee;
-    --fail:#b3261e; --fail-bg:#fbeceb;
-    --amber:#8a5a00; --amber-bg:#fff4d6;
+    --ink:#14181f; --ink-soft:#3d4451; --sub:#6b7280; --faint:#a5abb6;
+    --line:#e7e9ee; --line-soft:#f0f1f4; --bg:#f5f6f9; --card:#ffffff; --card-2:#fbfbfd;
+    --accent:#2451c4; --accent-2:#4d7cf0; --accent-soft:#eef2fc;
+    --green:#0f8a53; --green-bg:#e6f7ee;
+    --fail:#d33; --fail-bg:#fdecec;
     --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+    --shadow-sm:0 1px 2px rgba(15,20,35,.04), 0 1px 1px rgba(15,20,35,.03);
+    --shadow-md:0 10px 30px rgba(15,20,35,.08);
+    --radius:16px;
+  }
+  html[data-theme="dark"]{
+    --ink:#eef1f6; --ink-soft:#c7cdd8; --sub:#8b93a3; --faint:#5c6472;
+    --line:#242a35; --line-soft:#1b2029; --bg:#0b0e14; --card:#12161f; --card-2:#151a24;
+    --accent:#5b8cff; --accent-2:#7ba2ff; --accent-soft:#182240;
+    --green:#2fd88a; --green-bg:#0f2a1e;
+    --fail:#ff6b6b; --fail-bg:#2c1414;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+    --shadow-md:0 10px 30px rgba(0,0,0,.45);
   }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body{
     margin:0; font-family:"Inter","Noto Sans JP",-apple-system,sans-serif; color:var(--ink);
-    background:var(--bg); min-height:100vh; -webkit-font-smoothing:antialiased;
+    background:var(--bg); min-height:100vh; -webkit-font-smoothing:antialiased; transition:background .25s ease, color .25s ease;
   }
-  .wrap{ max-width:880px; margin:0 auto; padding:32px 22px calc(96px + env(safe-area-inset-bottom)); }
+  .bg-glow{ position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.7;
+    background: radial-gradient(700px 380px at 15% -8%, rgba(36,81,196,.14), transparent 60%),
+                radial-gradient(600px 340px at 105% 8%, rgba(15,138,83,.1), transparent 55%); }
+  html[data-theme="dark"] .bg-glow{ opacity:1; }
+  .wrap{ position:relative; z-index:1; max-width:920px; margin:0 auto; padding:28px 20px calc(100px + env(safe-area-inset-bottom)); }
 
-  .topbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
-  .topbar a{ color:var(--sub); text-decoration:none; font-size:13px; font-weight:500; display:flex; align-items:center; gap:5px; }
-  .topbar a svg{ width:16px; height:16px; }
+  .topbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; }
+  .topbar a{ color:var(--sub); text-decoration:none; font-size:13px; font-weight:600; display:flex; align-items:center; gap:5px; }
+  .topbar a svg{ width:15px; height:15px; }
+  .theme-toggle{ width:32px; height:32px; border-radius:10px; border:1px solid var(--line); background:var(--card); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--ink-soft); box-shadow:var(--shadow-sm); }
+  .theme-toggle svg{ width:16px; height:16px; }
 
-  .tabs{ display:flex; gap:6px; margin-bottom:24px; }
-  .tabs a{ flex:1; text-align:center; padding:9px 10px; border-radius:9px; font-size:12.5px; font-weight:600; text-decoration:none; color:var(--sub); background:var(--card); border:1px solid var(--line); }
-  .tabs a.active{ background:var(--ink); color:#fff; border-color:var(--ink); }
+  .tabs{ display:flex; gap:6px; margin-bottom:26px; padding:4px; background:var(--card-2); border:1px solid var(--line); border-radius:13px; }
+  .tabs a{ flex:1; text-align:center; padding:9px 10px; border-radius:10px; font-size:12.5px; font-weight:600; text-decoration:none; color:var(--sub); transition:all .15s ease; }
+  .tabs a.active{ background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff; box-shadow:0 4px 14px rgba(36,81,196,.35); }
 
-  .header{ margin-bottom:18px; }
-  .header .eyebrow{ font-size:11px; font-weight:600; color:var(--accent); letter-spacing:.08em; text-transform:uppercase; margin-bottom:6px; }
-  .header h1{ font-size:22px; font-weight:700; margin:0; letter-spacing:-.01em; }
-  .header p{ margin:5px 0 0; color:var(--sub); font-size:13px; }
+  .header{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:20px; }
+  .header .eyebrow{ font-size:11px; font-weight:700; color:var(--accent); letter-spacing:.1em; text-transform:uppercase; margin-bottom:7px; }
+  .header h1{ font-size:22px; font-weight:800; margin:0; letter-spacing:-.02em; }
+  .header p{ margin:6px 0 0; color:var(--sub); font-size:13px; }
+  .export-btn{
+    flex:0 0 auto; display:flex; align-items:center; gap:7px; padding:10px 16px; border-radius:11px;
+    background:linear-gradient(135deg,var(--green),#17b56b); color:#fff; font-size:12.5px; font-weight:700;
+    border:none; cursor:pointer; box-shadow:0 4px 14px rgba(15,138,83,.3); transition:transform .12s ease;
+  }
+  .export-btn:active{ transform:scale(.96); }
+  .export-btn svg{ width:15px; height:15px; }
 
   .search-input-wrap{ position:relative; margin-bottom:16px; }
   .search-input-wrap input{
     width:100%; font-family:inherit; font-size:14.5px; font-weight:500;
     padding:13px 14px 13px 42px; border-radius:12px; border:1px solid var(--line);
-    background:var(--card); outline:none;
+    background:var(--card); outline:none; color:var(--ink);
   }
-  .search-input-wrap input:focus{ border-color:var(--accent); box-shadow:0 0 0 3px rgba(36,81,196,.12); }
+  .search-input-wrap input:focus{ border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
   .search-icon{ position:absolute; left:14px; top:50%; transform:translateY(-50%); width:16px; height:16px; opacity:.4; }
 
-  .log-table{ background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
-  .log-row{ display:grid; grid-template-columns:120px 70px 1fr 90px; gap:10px; align-items:center; padding:11px 14px; border-bottom:1px solid var(--line-soft); font-size:12px; }
+  .log-table{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow-sm); }
+  .log-row{ display:grid; grid-template-columns:118px 68px 1fr 90px; gap:10px; align-items:center; padding:12px 16px; border-bottom:1px solid var(--line-soft); font-size:12px; transition:background .1s ease; }
+  .log-row:not(.head):hover{ background:var(--card-2); }
   .log-row:last-child{ border-bottom:none; }
-  .log-row.head{ background:var(--line-soft); font-weight:700; color:var(--ink-soft); text-transform:uppercase; font-size:10px; letter-spacing:.04em; }
+  .log-row.head{ background:var(--card-2); font-weight:700; color:var(--ink-soft); text-transform:uppercase; font-size:10px; letter-spacing:.04em; }
   .log-ts{ font-family:var(--mono); color:var(--sub); font-size:11px; }
   .log-event{ font-weight:700; padding:3px 8px; border-radius:6px; text-align:center; font-size:10.5px; white-space:nowrap; }
   .log-event.SAVE{ background:var(--green-bg); color:var(--green); }
@@ -62,16 +87,18 @@
   .log-user{ color:var(--sub); font-size:11.5px; text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
   .empty{ text-align:center; color:var(--sub); padding:50px 10px; font-size:13.5px; }
-  .loading{ text-align:center; color:var(--faint); padding:70px 10px; font-size:13px; font-family:var(--mono); }
+  .skeleton-row{ height:44px; margin:8px 16px; border-radius:8px; background:linear-gradient(90deg, var(--line-soft) 25%, var(--line) 37%, var(--line-soft) 63%); background-size:400% 100%; animation:shimmer 1.4s ease infinite; }
+  @keyframes shimmer{ 0%{ background-position:100% 0; } 100%{ background-position:0 0; } }
   .result-count{ font-size:11.5px; font-weight:600; color:var(--sub); margin:0 4px 10px; }
-
-  .bottom-nav{
-    position:fixed; left:0; right:0; bottom:0; z-index:50;
-    display:flex; justify-content:space-around; align-items:center;
-    background:rgba(255,255,255,.92); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
-    border-top:1px solid var(--line); padding:9px 0 calc(9px + env(safe-area-inset-bottom));
-    box-shadow:0 -6px 24px rgba(20,30,60,.07);
+  .toast{
+    position:fixed; bottom:100px; left:50%; transform:translateX(-50%) translateY(20px); opacity:0;
+    background:var(--ink); color:var(--bg); font-size:12.5px; font-weight:600; padding:11px 20px; border-radius:11px;
+    box-shadow:var(--shadow-md); z-index:100; transition:all .25s cubic-bezier(.16,1,.3,1); pointer-events:none;
   }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .bottom-nav{ position:fixed; left:0; right:0; bottom:0; z-index:50; display:flex; justify-content:space-around; align-items:center; background:rgba(255,255,255,.88); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); border-top:1px solid var(--line); padding:9px 0 calc(9px + env(safe-area-inset-bottom)); box-shadow:0 -6px 24px rgba(15,20,35,.06); }
+  html[data-theme="dark"] .bottom-nav{ background:rgba(18,22,31,.88); }
   .nav-item{ display:flex; flex-direction:column; align-items:center; gap:3px; text-decoration:none; color:var(--faint); font-size:10.5px; font-weight:700; padding:4px 20px; border-radius:12px; }
   .nav-item svg{ width:22px; height:22px; stroke-width:2; }
   .nav-item.active{ color:var(--accent); }
@@ -79,17 +106,19 @@
   @media (max-width:640px){
     .log-row{ grid-template-columns:1fr; gap:4px; }
     .log-row.head{ display:none; }
-    .log-ts{ order:1; }
-    .log-event{ order:2; justify-self:start; }
-    .log-detail{ order:3; white-space:normal; }
-    .log-user{ order:4; text-align:left; }
+    .log-ts{ order:1; } .log-event{ order:2; justify-self:start; } .log-detail{ order:3; white-space:normal; } .log-user{ order:4; text-align:left; }
+    .header{ flex-direction:column; }
   }
 </style>
 </head>
 <body>
+  <div class="bg-glow"></div>
   <div class="wrap">
     <div class="topbar">
       <a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg> ポータル</a>
+      <div class="theme-toggle" id="themeToggle" title="ダーク/ライト切替">
+        <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </div>
     </div>
 
     <div class="tabs">
@@ -99,9 +128,15 @@
     </div>
 
     <div class="header">
-      <div class="eyebrow">Audit Log</div>
-      <h1>📋 監査ログ</h1>
-      <p>誰が・いつ・何を保存/印刷したかをすべて自動記録しています</p>
+      <div>
+        <div class="eyebrow">Audit Log</div>
+        <h1>📋 監査ログ</h1>
+        <p>誰が・いつ・何を保存/印刷したかをすべて自動記録しています</p>
+      </div>
+      <button class="export-btn" id="exportBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 10l5 5 5-5"/><path d="M4 21h16"/></svg>
+        Excel出力
+      </button>
     </div>
 
     <div class="search-input-wrap">
@@ -110,10 +145,13 @@
     </div>
 
     <div id="resultCount" class="result-count"></div>
-    <div id="logTable" class="log-table"></div>
-    <div id="loadingState" class="loading">読み込み中…</div>
+    <div id="logTable" class="log-table">
+      <div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div>
+    </div>
     <div id="emptyState" class="empty" style="display:none;">該当するログが見つかりません。</div>
   </div>
+
+  <div class="toast" id="toast"></div>
 
   <nav class="bottom-nav">
     <a href="index.html" class="nav-item">
@@ -133,12 +171,34 @@
   <script>
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbxS2x82HUV6wBw9uZUwRw_2u8LcBhQiol8FZsGxoN_X-CywGMffWHJRMQMMkrNXqaq0Gg/exec';
 
+    const THEME_KEY = 'kensa:theme';
+    function applyTheme(t){
+      document.documentElement.setAttribute('data-theme', t);
+      document.getElementById('themeIcon').innerHTML = t === 'dark'
+        ? '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>'
+        : '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
+    }
+    let __theme = localStorage.getItem(THEME_KEY) || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    applyTheme(__theme);
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      __theme = __theme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem(THEME_KEY, __theme);
+      applyTheme(__theme);
+    });
+
+    function showToast(msg){
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
     const tableEl = document.getElementById('logTable');
     const emptyEl = document.getElementById('emptyState');
-    const loadingEl = document.getElementById('loadingState');
     const countEl = document.getElementById('resultCount');
     const searchInput = document.getElementById('searchInput');
     let __debounceTimer = null;
+    let __currentRows = [];
 
     async function apiGAS(body){
       const res = await fetch(GAS_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
@@ -150,17 +210,13 @@
       try{ const d = new Date(iso); return d.toLocaleString('ja-JP', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }); }
       catch(e){ return iso || ''; }
     }
-    function eventClass(ev){
-      if (ev === 'SAVE') return 'SAVE';
-      if (ev === 'PRINT') return 'PRINT';
-      return 'other';
-    }
+    function eventClass(ev){ if (ev === 'SAVE') return 'SAVE'; if (ev === 'PRINT') return 'PRINT'; return 'other'; }
 
     function render(rows){
+      __currentRows = rows;
       countEl.textContent = `${rows.length} 件`;
       if (rows.length === 0){ tableEl.innerHTML=''; emptyEl.style.display = 'block'; return; }
       emptyEl.style.display = 'none';
-
       const head = `<div class="log-row head"><span>日時</span><span>種別</span><span>詳細</span><span>担当者</span></div>`;
       const body = rows.map(r => `
         <div class="log-row">
@@ -174,8 +230,6 @@
     }
 
     async function load(query){
-      loadingEl.style.display = 'block';
-      emptyEl.style.display = 'none';
       try{
         const res = await apiGAS({ action:'getAuditLog', query: query || '', limit: 150 });
         const rows = (res && res.ok && Array.isArray(res.rows)) ? res.rows : [];
@@ -185,14 +239,38 @@
         countEl.textContent = '';
         emptyEl.style.display = 'block';
         emptyEl.textContent = '読み込みに失敗しました — ' + (e.message||e);
-      }finally{
-        loadingEl.style.display = 'none';
       }
     }
 
     searchInput.addEventListener('input', () => {
       clearTimeout(__debounceTimer);
       __debounceTimer = setTimeout(() => load(searchInput.value.trim()), 400);
+    });
+
+    /* ---------- Excel(CSV) 出力 ---------- */
+    function csvEscape(v){
+      const s = String(v ?? '');
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+    }
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      if (!__currentRows.length){ showToast('出力するデータがありません'); return; }
+      const headers = ['日時','種別','客先','ファイル名','担当者','判定','app_ns'];
+      const lines = [headers.join(',')];
+      __currentRows.forEach(r => {
+        lines.push([
+          csvEscape(fmtDate(r.timestamp)), csvEscape(r.event), csvEscape(r.customer),
+          csvEscape(r.file_name), csvEscape(r.inputter), csvEscape(r.judgment), csvEscape(r.app_ns)
+        ].join(','));
+      });
+      const csv = '\uFEFF' + lines.join('\r\n'); // BOM付きでExcelの文字化け防止
+      const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const ymd = new Date().toISOString().slice(0,10).replace(/-/g,'');
+      a.href = url; a.download = `監査ログ_${ymd}.csv`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
+      showToast(`✅ ${__currentRows.length}件をCSV出力しました`);
     });
 
     load('');

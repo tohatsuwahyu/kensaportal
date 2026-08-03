@@ -28,6 +28,9 @@
   .topbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; }
   .topbar a{ color:var(--sub); text-decoration:none; font-size:13px; font-weight:500; display:flex; align-items:center; gap:5px; }
   .back-btn svg{ width:16px; height:16px; }
+  .tabs{ display:flex; gap:6px; margin-bottom:24px; }
+  .tabs a{ flex:1; text-align:center; padding:9px 10px; border-radius:9px; font-size:12.5px; font-weight:600; text-decoration:none; color:var(--sub); background:var(--card); border:1px solid var(--line); }
+  .tabs a.active{ background:var(--ink); color:#fff; border-color:var(--ink); }
   .wrap{ padding-bottom:calc(96px + env(safe-area-inset-bottom)); }
   .bottom-nav{
     position:fixed; left:0; right:0; bottom:0; z-index:50;
@@ -96,6 +99,12 @@
     <div class="topbar">
       <a href="index.html" class="back-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg> ポータル</a>
       <span class="updated" id="updatedAt"></span>
+    </div>
+
+    <div class="tabs">
+      <a href="dashboard.html" class="active">📊 品質ダッシュボード</a>
+      <a href="dx-report.html">🚀 DXレポート</a>
+      <a href="audit-log.html">📋 監査ログ</a>
     </div>
 
     <div class="header">

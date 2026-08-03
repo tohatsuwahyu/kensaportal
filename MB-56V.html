@@ -161,6 +161,8 @@
     <details class="toolbar-menu">
       <summary>⚙️ 設定</summary>
       <div class="toolbar-menu-panel no-print">
+        <a href="manual.html" style="display:block;text-decoration:none;color:inherit;"><button type="button" style="width:100%;text-align:left;">❓ 使い方ガイド</button></a>
+        <hr style="width:100%;border:none;border-top:1px solid #eee;margin:2px 0;">
         <button type="button" onclick="configureNextSerial()">🔢 番号設定</button>
         <button type="button" onclick="configureDigits()">#️⃣ 桁数設定</button>
         <hr style="width:100%;border:none;border-top:1px solid #eee;margin:2px 0;">
@@ -208,7 +210,10 @@
         </tr>
         <tr class="order-no-row">
           <td class="section-label">オーダーNo</td>
-          <td class="data" colspan="5"><input type="text" name="order_no" placeholder="例: 102P068219-001" class="soft-required" data-soft-required="1" /></td>
+          <td class="data" colspan="5">
+            <input type="text" name="order_no" placeholder="例: 102P068219-001" class="soft-required" data-soft-required="1" autocapitalize="characters" autocomplete="off" />
+            <div id="orderNoWarning" class="no-print" style="display:none;font-size:2.7mm;color:#b8860b;background:#fff6e0;padding:1mm 2mm;border-radius:1.5mm;margin-top:1mm;"></div>
+          </td>
         </tr>
       </table>
 
@@ -350,7 +355,22 @@
       const g = c.getContext('2d'); g.scale(dpr,dpr);
       const cx=size/2, cy=size/2, R=size*0.42; g.fillStyle=INK; g.strokeStyle=INK; g.textAlign='center'; g.textBaseline='middle';
       const circleStroke = Math.max(1, size*0.022); g.lineWidth = circleStroke; g.beginPath(); g.arc(cx,cy,R - circleStroke/2,0,Math.PI*2); g.stroke();
-      if(name){ g.font=`800 ${Math.round(size*0.22)}px "Yu Mincho","Hiragino Mincho ProN","MS Mincho",serif`; g.fillText(name, cx, cy); }
+      if(name){
+        // 名前が短ければ1行、長ければ2行（括弧があればそこで分割）にして潰れないようにする
+        let lines;
+        if (name.length <= 3){
+          lines = [name];
+        } else {
+          const bracketIdx = name.indexOf('（');
+          lines = bracketIdx > 0 ? [name.slice(0,bracketIdx), name.slice(bracketIdx)]
+                                   : [name.slice(0, Math.ceil(name.length/2)), name.slice(Math.ceil(name.length/2))];
+        }
+        const fontSize = lines.length > 1 ? Math.round(size*0.155) : Math.round(size*0.22);
+        g.font = `800 ${fontSize}px "Yu Mincho","Hiragino Mincho ProN","MS Mincho",serif`;
+        const lineGap = fontSize * 1.05;
+        const startY = cy - (lineGap * (lines.length-1)) / 2;
+        lines.forEach((line,i) => g.fillText(line, cx, startY + i*lineGap));
+      }
       return c.toDataURL('image/png');
     }
     function updateDynamicSeal(slot){
@@ -591,6 +611,40 @@
         inp.addEventListener('change',()=>{ upd(); markSoftRequired(); updateAllSeals(); }); upd();
       });
     }
+    /* ===== オーダーNo: 全角→半角変換・前後スペース除去・重複チェック ===== */
+    function toHalfWidth(str){
+      return str
+        .replace(/[Ａ-Ｚａ-ｚ０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0)) // 全角英数字→半角
+        .replace(/ー/g, '-').replace(/[‐－―]/g, '-') // よくある全角ハイフン類→半角
+        .replace(/　/g, ' '); // 全角スペース→半角スペース
+    }
+    let __orderNoCheckTimer = null;
+    function wireOrderNoAssist(){
+      const inp = document.querySelector('input[name="order_no"]');
+      const warnEl = document.getElementById('orderNoWarning');
+      if (!inp || inp.dataset.assistWired === '1') return;
+      inp.dataset.assistWired = '1';
+
+      inp.addEventListener('blur', () => {
+        const cleaned = toHalfWidth(inp.value).trim().replace(/\s{2,}/g, ' ');
+        if (cleaned !== inp.value) inp.value = cleaned;
+        markSoftRequired();
+
+        if (warnEl) warnEl.style.display = 'none';
+        clearTimeout(__orderNoCheckTimer);
+        if (!cleaned) return;
+        __orderNoCheckTimer = setTimeout(async () => {
+          try{
+            const res = await apiGAS({ action:'checkOrderNo', order_no: cleaned });
+            if (res?.ok && res.duplicate && warnEl){
+              warnEl.textContent = '⚠️ この注文No.は ' + res.date + ' に ' + (res.customer||'') + ' ' + (res.hinmei||'') + '（' + (res.serial_full||'') + '）で既に使用されています。入力ミスでないかご確認ください。';
+              warnEl.style.display = 'block';
+            }
+          }catch(e){ /* ネットワーク不調時は静かに無視（保存自体はブロックしない） */ }
+        }, 300);
+      });
+    }
+
     function markSoftRequired(){
       let missing = 0;
       document.querySelectorAll('[data-soft-required]').forEach(el=>{
@@ -909,6 +963,7 @@ if (!prefixReady()) { applyPrefix(); if (!prefixReady()) return false; }
       applyPrefix();
       wireSoftRequired(); markSoftRequired();
       wirePhotoInput(); renderPhotoGallery();
+      wireOrderNoAssist();
       wireJudgeSelects(); recomputeFinalJudgment();
 
       document.querySelector('input[name="zuban"]')?.addEventListener('change', async ()=>{

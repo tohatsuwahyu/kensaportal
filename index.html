@@ -3,32 +3,29 @@
 <head>
 <meta charset="UTF-8" />
 <title>出荷検査成績書 ポータル</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5, viewport-fit=cover" />
+<meta name="theme-color" content="#1b5fd6" />
 <link rel="icon" href="tsh.png" onerror="this.remove()">
+<link rel="apple-touch-icon" href="tsh.png" onerror="this.remove()">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --accent:#1b5fd6;
-    --accent-2:#3b82f6;
-    --ink:#161b22;
-    --sub:#68707c;
-    --line:#e7e9ee;
-    --bg-1:#eef2f8;
-    --bg-2:#e4ebf6;
-    --card:#ffffff;
-    --radius-lg:20px;
-    --radius-md:14px;
+    --accent:#1b5fd6; --accent-2:#3b82f6;
+    --ink:#161b22; --sub:#68707c; --faint:#a5abb6; --line:#e7e9ee;
+    --bg-1:#eef2f8; --bg-2:#e4ebf6; --card:#ffffff;
+    --pass:#1b7a4a; --pass-bg:#e9f6ee; --fail:#b3261e; --fail-bg:#fbeceb;
+    --radius-lg:20px; --radius-md:14px; --radius-sm:10px;
     --shadow-sm:0 1px 2px rgba(20,30,50,.05), 0 1px 1px rgba(20,30,50,.04);
     --shadow-md:0 8px 24px rgba(20,30,60,.08);
-    --shadow-lg:0 16px 40px rgba(20,30,60,.14);
+    --mono:"JetBrains Mono",ui-monospace,monospace;
   }
-  *{ box-sizing:border-box; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html,body{ margin:0; padding:0; min-height:100%; }
   body{
     font-family:"Inter","Noto Sans JP",-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",sans-serif;
-    color:var(--ink);
+    color:var(--ink); -webkit-font-smoothing:antialiased;
     background:
       radial-gradient(1100px 500px at 12% -10%, #dbe7fb 0%, transparent 60%),
       radial-gradient(900px 500px at 110% 10%, #e7f0ff 0%, transparent 55%),
@@ -36,37 +33,41 @@
     min-height:100vh;
   }
 
-  .wrap{ max-width:860px; margin:0 auto; padding:36px 20px 70px; }
+  .wrap{ max-width:860px; margin:0 auto; padding:18px 18px calc(96px + env(safe-area-inset-bottom)); }
 
-  /* ---------- Header ---------- */
-  .header{ display:flex; flex-direction:column; align-items:center; text-align:center; padding:10px 0 26px; }
-  .logo-wrap{
-    width:64px; height:64px; border-radius:18px; background:var(--card);
-    display:flex; align-items:center; justify-content:center; overflow:hidden;
-    box-shadow:var(--shadow-md); margin-bottom:16px; position:relative;
+  /* ---------- App bar ---------- */
+  .appbar{ display:flex; align-items:center; gap:12px; padding:4px 2px 20px; }
+  .appbar .logo{
+    width:42px; height:42px; border-radius:12px; background:var(--card); flex:0 0 auto;
+    display:flex; align-items:center; justify-content:center; overflow:hidden; box-shadow:var(--shadow-sm);
   }
-  .logo-img{ width:100%; height:100%; object-fit:contain; padding:8px; display:block; }
-  .logo-fallback{
-    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff;
-    font-weight:800; font-size:18px; letter-spacing:.5px;
+  .appbar .logo img{ width:100%; height:100%; object-fit:contain; padding:6px; }
+  .appbar .logo-fallback{ width:100%; height:100%; display:none; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff; font-weight:800; font-size:13px; }
+  .appbar-text{ flex:1; min-width:0; }
+  .appbar-text .eyebrow{ font-size:10.5px; font-weight:700; color:var(--accent); letter-spacing:.09em; text-transform:uppercase; }
+  .appbar-text h1{ font-size:18px; font-weight:800; margin:1px 0 0; letter-spacing:-.01em; }
+  .dx-badge{
+    flex:0 0 auto; display:flex; align-items:center; gap:5px; font-size:10px; font-weight:700;
+    color:#8a5a00; background:linear-gradient(135deg,#fff4d6,#ffe9b3); border:1px solid #f0d28a;
+    padding:6px 10px; border-radius:999px; white-space:nowrap;
   }
-  .header h1{
-    font-size:23px; font-weight:800; margin:0 0 6px; letter-spacing:-.01em;
+
+  /* ---------- Quick stats ---------- */
+  .stats-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-bottom:20px; }
+  .stat-card{
+    background:var(--card); border-radius:var(--radius-md); padding:13px 12px; box-shadow:var(--shadow-sm);
+    border:1px solid var(--line);
   }
-  .header p{ margin:0; color:var(--sub); font-size:13.5px; font-weight:500; }
-  .quick-nav{ display:flex; gap:10px; margin-top:14px; }
-  .quick-nav a{
-    font-size:12.5px; font-weight:600; color:var(--accent); text-decoration:none;
-    padding:7px 14px; border-radius:999px; background:var(--card); border:1px solid var(--line);
-    box-shadow:var(--shadow-sm); transition:box-shadow .12s ease, transform .12s ease;
-  }
-  .quick-nav a:hover{ box-shadow:var(--shadow-md); transform:translateY(-1px); }
+  .stat-card .stat-icon{ width:26px; height:26px; border-radius:8px; display:flex; align-items:center; justify-content:center; margin-bottom:8px; }
+  .stat-card .stat-icon svg{ width:14px; height:14px; }
+  .stat-card.total .stat-icon{ background:#eaf1ff; color:var(--accent); }
+  .stat-card.pass .stat-icon{ background:var(--pass-bg); color:var(--pass); }
+  .stat-card.fail .stat-icon{ background:var(--fail-bg); color:var(--fail); }
+  .stat-card .stat-num{ font-family:var(--mono); font-size:19px; font-weight:600; line-height:1; }
+  .stat-card .stat-label{ font-size:10.5px; color:var(--sub); font-weight:600; margin-top:5px; }
 
   /* ---------- Search ---------- */
-  .search-box{ position:sticky; top:0; padding:16px 0 14px; z-index:5;
-    background:linear-gradient(180deg, var(--bg-1) 78%, rgba(238,242,248,0)); }
-  .search-input-wrap{ position:relative; }
+  .search-input-wrap{ position:relative; margin-bottom:12px; }
   .search-input-wrap input{
     width:100%; font-family:inherit; font-size:15.5px; font-weight:500;
     padding:15px 16px 15px 46px; border-radius:16px; border:1px solid var(--line);
@@ -74,10 +75,10 @@
     transition:box-shadow .15s ease, border-color .15s ease;
   }
   .search-input-wrap input::placeholder{ color:#9aa2ad; font-weight:400; }
-  .search-input-wrap input:focus{ border-color:var(--accent); box-shadow:0 0 0 4px rgba(27,95,214,.12), var(--shadow-sm); }
-  .search-icon{ position:absolute; left:16px; top:50%; transform:translateY(-50%); font-size:16px; opacity:.45; pointer-events:none; }
+  .search-input-wrap input:focus{ border-color:var(--accent); box-shadow:0 0 0 4px rgba(27,95,214,.12); }
+  .search-icon{ position:absolute; left:16px; top:50%; transform:translateY(-50%); width:18px; height:18px; opacity:.4; }
 
-  .chips{ display:flex; gap:8px; overflow-x:auto; padding:12px 2px 2px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  .chips{ display:flex; gap:8px; overflow-x:auto; padding:2px 2px 4px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
   .chips::-webkit-scrollbar{ display:none; }
   .chip{
     flex:0 0 auto; padding:8px 15px; border-radius:999px; border:1px solid var(--line); background:var(--card);
@@ -87,59 +88,89 @@
   .chip:hover{ border-color:#c9d4e8; }
   .chip.active{ background:linear-gradient(135deg,var(--accent),var(--accent-2)); border-color:transparent; color:#fff; box-shadow:0 6px 16px rgba(27,95,214,.28); }
 
-  .result-count{ font-size:12px; font-weight:600; color:var(--sub); margin:14px 4px 8px; letter-spacing:.01em; }
+  .result-count{ font-size:12px; font-weight:600; color:var(--sub); margin:16px 4px 8px; letter-spacing:.01em; }
 
   /* ---------- List ---------- */
-  .list{ display:flex; flex-direction:column; gap:10px; }
+  .list{ display:flex; flex-direction:column; gap:9px; }
   .card{
-    display:flex; align-items:center; gap:14px; background:var(--card); border-radius:var(--radius-md);
-    padding:14px 16px; box-shadow:var(--shadow-sm); text-decoration:none; color:inherit; border:1px solid var(--line);
+    display:flex; align-items:center; gap:13px; background:var(--card); border-radius:var(--radius-md);
+    padding:13px 15px; box-shadow:var(--shadow-sm); text-decoration:none; color:inherit; border:1px solid var(--line);
     transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
   }
-  .card:hover{ box-shadow:var(--shadow-md); border-color:#d3ddf0; transform:translateY(-1px); }
-  .card:active{ transform:scale(.985); }
+  .card:active{ transform:scale(.98); }
+  @media (hover:hover){ .card:hover{ box-shadow:var(--shadow-md); border-color:#d3ddf0; transform:translateY(-1px); } }
   .card-icon{
-    flex:0 0 auto; width:44px; height:44px; border-radius:12px;
-    background:linear-gradient(135deg,#eaf1ff,#f3f7ff); color:var(--accent);
-    display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:800;
-    border:1px solid #dde6f9;
+    flex:0 0 auto; width:44px; height:44px; border-radius:13px;
+    display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:800; color:#fff;
   }
   .card-main{ flex:1 1 auto; min-width:0; }
-  .card-customer{ font-size:11.5px; font-weight:600; color:var(--accent); margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:.01em; }
-  .card-title{ font-size:15.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .card-sub{ font-size:12.5px; color:var(--sub); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .card-arrow{ flex:0 0 auto; color:#c3ccdb; font-size:20px; transition:transform .12s ease, color .12s ease; }
+  .card-customer{ font-size:11.5px; font-weight:600; color:var(--accent); margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:.01em; }
+  .card-title{ font-size:15px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .card-sub{ font-size:12px; color:var(--sub); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .card-arrow{ flex:0 0 auto; color:#c3ccdb; transition:transform .12s ease, color .12s ease; }
+  .card-arrow svg{ width:18px; height:18px; }
   .card:hover .card-arrow{ transform:translateX(2px); color:var(--accent); }
 
   .empty{ text-align:center; color:var(--sub); padding:60px 10px; font-size:14px; }
   .empty .big{ font-size:34px; margin-bottom:10px; opacity:.7; }
 
-  .footer{ text-align:center; margin-top:44px; font-size:11.5px; color:#a2aab5; font-weight:500; letter-spacing:.02em; }
+  .footer-note{ text-align:center; margin-top:30px; font-size:11px; color:var(--faint); font-weight:500; letter-spacing:.02em; }
+
+  /* ---------- Bottom nav (app-style) ---------- */
+  .bottom-nav{
+    position:fixed; left:0; right:0; bottom:0; z-index:50;
+    display:flex; justify-content:space-around; align-items:center;
+    background:rgba(255,255,255,.92); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    border-top:1px solid var(--line);
+    padding:9px 0 calc(9px + env(safe-area-inset-bottom));
+    box-shadow:0 -6px 24px rgba(20,30,60,.07);
+  }
+  .nav-item{
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    text-decoration:none; color:var(--faint); font-size:10.5px; font-weight:700;
+    padding:4px 20px; border-radius:12px; transition:color .15s ease;
+  }
+  .nav-item svg{ width:22px; height:22px; stroke-width:2; }
+  .nav-item.active{ color:var(--accent); }
 </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="header">
-      <div class="logo-wrap">
-        <img class="logo-img" id="logoImg" src="tsh.png" alt="logo"
-             onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='flex';">
-        <div class="logo-fallback" id="logoFallback" style="display:none;">TSH</div>
+    <div class="appbar">
+      <div class="logo">
+        <img id="logoImg" src="tsh.png" alt="logo" onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='flex';">
+        <div class="logo-fallback" id="logoFallback">TSH</div>
       </div>
-      <h1>出荷検査成績書 ポータル</h1>
-      <p>客先・機種・品名で検索、またはタップして絞り込み</p>
-      <div class="quick-nav">
-        <a href="riwayat.html">📚 検査履歴</a>
-        <a href="dashboard.html">📊 ダッシュボード</a>
+      <div class="appbar-text">
+        <div class="eyebrow">Tokyo Seimitsu Hatsujo</div>
+        <h1>出荷検査成績書</h1>
+      </div>
+      <div class="dx-badge" title="ペーパーレス化・自動化によるDX推進の取り組みです">🚀 DX推進</div>
+    </div>
+
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card total">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx="1"/><rect x="12" y="8" width="3" height="10" rx="1"/><rect x="17" y="5" width="3" height="13" rx="1"/></svg></div>
+        <div class="stat-num" id="statTotal">–</div>
+        <div class="stat-label">今週の検査</div>
+      </div>
+      <div class="stat-card pass">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+        <div class="stat-num" id="statPass">–</div>
+        <div class="stat-label">合格</div>
+      </div>
+      <div class="stat-card fail">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></div>
+        <div class="stat-num" id="statFail">–</div>
+        <div class="stat-label">否</div>
       </div>
     </div>
 
-    <div class="search-box">
-      <div class="search-input-wrap">
-        <span class="search-icon">🔍</span>
-        <input id="searchInput" type="text" placeholder="客先・機種・品名・図番で検索…" autocomplete="off" />
-      </div>
-      <div id="chips" class="chips"></div>
+    <div class="search-input-wrap">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="searchInput" type="text" placeholder="客先・機種・品名・図番で検索…" autocomplete="off" />
     </div>
+    <div id="chips" class="chips"></div>
 
     <div id="resultCount" class="result-count"></div>
     <div id="list" class="list"></div>
@@ -148,10 +179,27 @@
       該当するフォームが見つかりません。<br>検索キーワードを変えてお試しください。
     </div>
 
-    <div class="footer">© 東京精密発條株式会社 All Rights Reserved　／　Design by Wahyu</div>
+    <div class="footer-note">© 東京精密発條株式会社 All Rights Reserved　／　Design by Wahyu</div>
   </div>
 
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>
+      ポータル
+    </a>
+    <a href="riwayat.html" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 3"/></svg>
+      履歴
+    </a>
+    <a href="dashboard.html" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx="1"/><rect x="12" y="8" width="3" height="10" rx="1"/><rect x="17" y="5" width="3" height="13" rx="1"/></svg>
+      ダッシュボード
+    </a>
+  </nav>
+
   <script>
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxS2x82HUV6wBw9uZUwRw_2u8LcBhQiol8FZsGxoN_X-CywGMffWHJRMQMMkrNXqaq0Gg/exec';
+
     /* =====================================================================
        ここに新しいフォームを1行ずつ追加してください（コピペでOK）:
        { customer:'客先名', kikishu:'機種', hinmei:'品名', zuban:'図番', file:'ファイル名.html' }
@@ -167,6 +215,13 @@
       // { customer:'〇〇工業㈱', kikishu:'AB-100', hinmei:'カバー', zuban:'1234-56', file:'AB-100.html' },
     ];
     /* ===================================================================== */
+
+    // 客先ごとに固定の色（アバター用）
+    const AVATAR_COLORS = ['#1b5fd6','#0f9d6d','#c2410c','#7c3aed','#be123c','#0891b2'];
+    function colorFor(name){
+      let h = 0; for (let i=0;i<name.length;i++) h = (h*31 + name.charCodeAt(i)) >>> 0;
+      return AVATAR_COLORS[h % AVATAR_COLORS.length];
+    }
 
     const searchInput = document.getElementById('searchInput');
     const chipsEl = document.getElementById('chips');
@@ -227,14 +282,15 @@
           const a = document.createElement('a');
           a.className = 'card';
           a.href = f.file;
+          const c = colorFor(f.customer);
           a.innerHTML = `
-            <div class="card-icon">${initials(f.kikishu)}</div>
+            <div class="card-icon" style="background:${c};">${initials(f.kikishu)}</div>
             <div class="card-main">
               <div class="card-customer">${f.customer}</div>
               <div class="card-title">${f.kikishu}　${f.hinmei}</div>
               <div class="card-sub">図番: ${f.zuban || '—'}</div>
             </div>
-            <div class="card-arrow">›</div>
+            <div class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
           `;
           listEl.appendChild(a);
         });
@@ -243,7 +299,20 @@
     searchInput.addEventListener('input', render);
     buildChips();
     render();
-    searchInput.focus();
+
+    /* ---------- Quick stats (今週) ---------- */
+    async function loadQuickStats(){
+      try{
+        const res = await fetch(GAS_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify({ action:'getDashboardStats', sinceDays:7 }) });
+        const data = await res.json();
+        if (data && data.ok){
+          document.getElementById('statTotal').textContent = data.total ?? 0;
+          document.getElementById('statPass').textContent = data.pass ?? 0;
+          document.getElementById('statFail').textContent = data.fail ?? 0;
+        }
+      }catch(e){ /* diamkan — statistik cuma pemanis, jangan blokir portal kalau gagal */ }
+    }
+    loadQuickStats();
   </script>
 </body>
 </html>

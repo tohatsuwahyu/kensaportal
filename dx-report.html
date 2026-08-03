@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<title>DXレポート — 出荷検査成績書</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5, viewport-fit=cover" />
+<meta name="theme-color" content="#14181f" />
+<link rel="icon" href="tsh.png" onerror="this.remove()">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14181f; --ink-soft:#3d4451; --sub:#7a8291; --faint:#a5abb6;
+    --line:#e7e9ee; --line-soft:#f0f1f4; --bg:#f7f8fa; --card:#ffffff;
+    --accent:#2451c4; --accent-soft:#eef2fc;
+    --green:#1b7a4a; --green-bg:#e9f6ee;
+    --amber:#8a5a00; --amber-bg:#fff4d6;
+    --purple:#6d28d9; --purple-bg:#f2ecfd;
+    --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{
+    margin:0; font-family:"Inter","Noto Sans JP",-apple-system,sans-serif; color:var(--ink);
+    background:var(--bg); min-height:100vh; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:880px; margin:0 auto; padding:32px 22px calc(96px + env(safe-area-inset-bottom)); }
+
+  .topbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+  .topbar a{ color:var(--sub); text-decoration:none; font-size:13px; font-weight:500; display:flex; align-items:center; gap:5px; }
+  .topbar a svg{ width:16px; height:16px; }
+
+  .tabs{ display:flex; gap:6px; margin-bottom:24px; }
+  .tabs a{ flex:1; text-align:center; padding:9px 10px; border-radius:9px; font-size:12.5px; font-weight:600; text-decoration:none; color:var(--sub); background:var(--card); border:1px solid var(--line); }
+  .tabs a.active{ background:var(--ink); color:#fff; border-color:var(--ink); }
+
+  .header{ margin-bottom:22px; }
+  .header .eyebrow{ font-size:11px; font-weight:600; color:var(--purple); letter-spacing:.08em; text-transform:uppercase; margin-bottom:6px; }
+  .header h1{ font-size:22px; font-weight:700; margin:0; letter-spacing:-.01em; }
+  .header p{ margin:5px 0 0; color:var(--sub); font-size:13px; }
+
+  .metrics{ display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:12px; overflow:hidden; margin-bottom:24px; }
+  .metric{ background:var(--card); padding:16px 14px; }
+  .metric-icon{ width:26px; height:26px; border-radius:8px; display:flex; align-items:center; justify-content:center; margin-bottom:10px; }
+  .metric-icon svg{ width:14px; height:14px; }
+  .metric.total .metric-icon{ background:var(--accent-soft); color:var(--accent); }
+  .metric.pass .metric-icon{ background:var(--green-bg); color:var(--green); }
+  .metric.cert .metric-icon{ background:var(--purple-bg); color:var(--purple); }
+  .metric.users .metric-icon{ background:var(--amber-bg); color:var(--amber); }
+  .metric-value{ font-family:var(--mono); font-size:23px; font-weight:600; letter-spacing:-.02em; }
+  .metric-label{ font-size:10.5px; color:var(--sub); font-weight:600; margin-top:4px; }
+
+  .panel{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:16px; }
+  .panel-title{ font-size:12px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em; margin-bottom:18px; }
+
+  .chart-wrap{ position:relative; }
+  .chart-wrap svg{ width:100%; height:auto; display:block; }
+  .chart-months{ display:flex; justify-content:space-between; font-family:var(--mono); font-size:10px; color:var(--faint); margin-top:8px; }
+
+  .info-note{ font-size:12px; color:var(--sub); line-height:1.7; }
+  .info-note b{ color:var(--ink-soft); }
+
+  .loading{ text-align:center; color:var(--faint); padding:70px 10px; font-size:13px; font-family:var(--mono); }
+
+  .bottom-nav{
+    position:fixed; left:0; right:0; bottom:0; z-index:50;
+    display:flex; justify-content:space-around; align-items:center;
+    background:rgba(255,255,255,.92); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    border-top:1px solid var(--line); padding:9px 0 calc(9px + env(safe-area-inset-bottom));
+    box-shadow:0 -6px 24px rgba(20,30,60,.07);
+  }
+  .nav-item{ display:flex; flex-direction:column; align-items:center; gap:3px; text-decoration:none; color:var(--faint); font-size:10.5px; font-weight:700; padding:4px 20px; border-radius:12px; }
+  .nav-item svg{ width:22px; height:22px; stroke-width:2; }
+  .nav-item.active{ color:var(--accent); }
+
+  @media (max-width:640px){ .metrics{ grid-template-columns:repeat(2,1fr); } }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg> ポータル</a>
+    </div>
+
+    <div class="tabs">
+      <a href="dashboard.html">📊 品質ダッシュボード</a>
+      <a href="dx-report.html" class="active">🚀 DXレポート</a>
+      <a href="audit-log.html">📋 監査ログ</a>
+    </div>
+
+    <div class="header">
+      <div class="eyebrow">DX Activity Summary</div>
+      <h1>DX活動サマリー</h1>
+      <p>紙からデジタルへの移行状況を自動集計しています</p>
+    </div>
+
+    <div id="content"><div class="loading">LOADING…</div></div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>
+      ポータル
+    </a>
+    <a href="riwayat.html" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 3"/></svg>
+      履歴
+    </a>
+    <a href="dashboard.html" class="nav-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx="1"/><rect x="12" y="8" width="3" height="10" rx="1"/><rect x="17" y="5" width="3" height="13" rx="1"/></svg>
+      ダッシュボード
+    </a>
+  </nav>
+
+  <script>
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxS2x82HUV6wBw9uZUwRw_2u8LcBhQiol8FZsGxoN_X-CywGMffWHJRMQMMkrNXqaq0Gg/exec';
+
+    async function apiGAS(body){
+      const res = await fetch(GAS_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+      if(!res.ok) throw new Error('GAS HTTP '+res.status);
+      return await res.json();
+    }
+
+    function lineChartSVG(trend){
+      const w = 800, h = 220, padL = 34, padR = 10, padT = 16, padB = 26;
+      const max = Math.max(10, ...trend.map(t => t.count));
+      const stepX = (w - padL - padR) / (trend.length - 1 || 1);
+      const yFor = v => padT + (h - padT - padB) * (1 - v / max);
+      const xFor = i => padL + stepX * i;
+
+      const points = trend.map((t,i) => [xFor(i), yFor(t.count)]);
+      const linePath = points.map((p,i) => (i===0?'M':'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+      const areaPath = linePath + ` L${points[points.length-1][0].toFixed(1)},${h-padB} L${points[0][0].toFixed(1)},${h-padB} Z`;
+
+      const gridLines = [0,0.25,0.5,0.75,1].map(f => {
+        const y = padT + (h-padT-padB)*f;
+        const val = Math.round(max*(1-f));
+        return `<line x1="${padL}" y1="${y}" x2="${w-padR}" y2="${y}" stroke="#eef0f4" stroke-width="1"/>
+                <text x="${padL-8}" y="${y+3}" text-anchor="end" font-size="9" fill="#a5abb6" font-family="JetBrains Mono, monospace">${val}</text>`;
+      }).join('');
+
+      const dots = points.map((p,i) => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" fill="#2451c4"/>`).join('');
+
+      return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
+        ${gridLines}
+        <path d="${areaPath}" fill="#2451c4" fill-opacity="0.08"/>
+        <path d="${linePath}" fill="none" stroke="#2451c4" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+        ${dots}
+      </svg>`;
+    }
+
+    function render(r){
+      document.getElementById('content').innerHTML = `
+        <div class="metrics">
+          <div class="metric total">
+            <div class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div>
+            <div class="metric-value">${r.totalRecords}</div>
+            <div class="metric-label">登録検査総数</div>
+          </div>
+          <div class="metric pass">
+            <div class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+            <div class="metric-value">${r.passCount}</div>
+            <div class="metric-label">合格件数</div>
+          </div>
+          <div class="metric cert">
+            <div class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18"/></svg></div>
+            <div class="metric-value">${r.issuedCertificates}</div>
+            <div class="metric-label">QR証明書発行数</div>
+          </div>
+          <div class="metric users">
+            <div class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+            <div class="metric-value">${r.activeUsers}</div>
+            <div class="metric-label">システム利用者数</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">月間システム操作数の推移</div>
+          <div class="chart-wrap">${lineChartSVG(r.monthlyTrend)}</div>
+          <div class="chart-months">${r.monthlyTrend.map(t=>`<span>${t.month}</span>`).join('')}</div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">このレポートについて</div>
+          <div class="info-note">
+            紙媒体の出荷検査記録を廃止し、本システムへ完全移行したことによるDX推進の成果を可視化しています。<br><br>
+            ・<b>登録検査総数</b>：本システムで保存された検査記録の累計件数<br>
+            ・<b>QR証明書発行数</b>：真正性検証QRコード付きで発行されたPDF証明書の件数<br>
+            ・<b>システム利用者数</b>：過去に検査を入力した担当者の実人数<br><br>
+            本レポートは DX認定制度 申請における設問(2)②・(3) の裏付け資料としてもご活用いただけます。
+          </div>
+        </div>
+      `;
+    }
+
+    async function load(){
+      try{
+        const res = await apiGAS({ action:'getDxReport' });
+        if (res && res.ok) render(res);
+        else throw new Error(res && res.message || '取得に失敗しました');
+      }catch(e){
+        document.getElementById('content').innerHTML = `<div class="loading">読み込みに失敗しました — ${(e.message||e)}</div>`;
+      }
+    }
+    load();
+  </script>
+</body>
+</html>

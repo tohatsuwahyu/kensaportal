@@ -27,6 +27,18 @@
 
   .topbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; }
   .topbar a{ color:var(--sub); text-decoration:none; font-size:13px; font-weight:500; display:flex; align-items:center; gap:5px; }
+  .back-btn svg{ width:16px; height:16px; }
+  .wrap{ padding-bottom:calc(96px + env(safe-area-inset-bottom)); }
+  .bottom-nav{
+    position:fixed; left:0; right:0; bottom:0; z-index:50;
+    display:flex; justify-content:space-around; align-items:center;
+    background:rgba(255,255,255,.92); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    border-top:1px solid var(--line); padding:9px 0 calc(9px + env(safe-area-inset-bottom));
+    box-shadow:0 -6px 24px rgba(20,30,60,.07);
+  }
+  .nav-item{ display:flex; flex-direction:column; align-items:center; gap:3px; text-decoration:none; color:#a5abb6; font-size:10.5px; font-weight:700; padding:4px 20px; border-radius:12px; font-family:"Inter","Noto Sans JP",sans-serif; }
+  .nav-item svg{ width:22px; height:22px; stroke-width:2; }
+  .nav-item.active{ color:var(--accent); }
   .topbar a:hover{ color:var(--ink); }
   .topbar .updated{ font-size:11.5px; color:var(--faint); font-family:var(--mono); }
 
@@ -82,7 +94,7 @@
 <body>
   <div class="wrap">
     <div class="topbar">
-      <a href="index.html">← ポータル</a>
+      <a href="index.html" class="back-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg> ポータル</a>
       <span class="updated" id="updatedAt"></span>
     </div>
 
@@ -101,6 +113,21 @@
     <div id="content"><div class="loading">LOADING…</div></div>
     <div class="footer">© 東京精密発條株式会社 All Rights Reserved　／　Design by Wahyu</div>
   </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>
+      ポータル
+    </a>
+    <a href="riwayat.html" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 3"/></svg>
+      履歴
+    </a>
+    <a href="dashboard.html" class="nav-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx="1"/><rect x="12" y="8" width="3" height="10" rx="1"/><rect x="17" y="5" width="3" height="13" rx="1"/></svg>
+      ダッシュボード
+    </a>
+  </nav>
 
   <script>
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbxS2x82HUV6wBw9uZUwRw_2u8LcBhQiol8FZsGxoN_X-CywGMffWHJRMQMMkrNXqaq0Gg/exec';

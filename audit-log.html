@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<title>監査ログ — 出荷検査成績書</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5, viewport-fit=cover" />
+<meta name="theme-color" content="#14181f" />
+<link rel="icon" href="tsh.png" onerror="this.remove()">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14181f; --ink-soft:#3d4451; --sub:#7a8291; --faint:#a5abb6;
+    --line:#e7e9ee; --line-soft:#f0f1f4; --bg:#f7f8fa; --card:#ffffff;
+    --accent:#2451c4; --accent-soft:#eef2fc;
+    --green:#1b7a4a; --green-bg:#e9f6ee;
+    --fail:#b3261e; --fail-bg:#fbeceb;
+    --amber:#8a5a00; --amber-bg:#fff4d6;
+    --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{
+    margin:0; font-family:"Inter","Noto Sans JP",-apple-system,sans-serif; color:var(--ink);
+    background:var(--bg); min-height:100vh; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:880px; margin:0 auto; padding:32px 22px calc(96px + env(safe-area-inset-bottom)); }
+
+  .topbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+  .topbar a{ color:var(--sub); text-decoration:none; font-size:13px; font-weight:500; display:flex; align-items:center; gap:5px; }
+  .topbar a svg{ width:16px; height:16px; }
+
+  .tabs{ display:flex; gap:6px; margin-bottom:24px; }
+  .tabs a{ flex:1; text-align:center; padding:9px 10px; border-radius:9px; font-size:12.5px; font-weight:600; text-decoration:none; color:var(--sub); background:var(--card); border:1px solid var(--line); }
+  .tabs a.active{ background:var(--ink); color:#fff; border-color:var(--ink); }
+
+  .header{ margin-bottom:18px; }
+  .header .eyebrow{ font-size:11px; font-weight:600; color:var(--accent); letter-spacing:.08em; text-transform:uppercase; margin-bottom:6px; }
+  .header h1{ font-size:22px; font-weight:700; margin:0; letter-spacing:-.01em; }
+  .header p{ margin:5px 0 0; color:var(--sub); font-size:13px; }
+
+  .search-input-wrap{ position:relative; margin-bottom:16px; }
+  .search-input-wrap input{
+    width:100%; font-family:inherit; font-size:14.5px; font-weight:500;
+    padding:13px 14px 13px 42px; border-radius:12px; border:1px solid var(--line);
+    background:var(--card); outline:none;
+  }
+  .search-input-wrap input:focus{ border-color:var(--accent); box-shadow:0 0 0 3px rgba(36,81,196,.12); }
+  .search-icon{ position:absolute; left:14px; top:50%; transform:translateY(-50%); width:16px; height:16px; opacity:.4; }
+
+  .log-table{ background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  .log-row{ display:grid; grid-template-columns:120px 70px 1fr 90px; gap:10px; align-items:center; padding:11px 14px; border-bottom:1px solid var(--line-soft); font-size:12px; }
+  .log-row:last-child{ border-bottom:none; }
+  .log-row.head{ background:var(--line-soft); font-weight:700; color:var(--ink-soft); text-transform:uppercase; font-size:10px; letter-spacing:.04em; }
+  .log-ts{ font-family:var(--mono); color:var(--sub); font-size:11px; }
+  .log-event{ font-weight:700; padding:3px 8px; border-radius:6px; text-align:center; font-size:10.5px; white-space:nowrap; }
+  .log-event.SAVE{ background:var(--green-bg); color:var(--green); }
+  .log-event.PRINT{ background:var(--accent-soft); color:var(--accent); }
+  .log-event.other{ background:var(--fail-bg); color:var(--fail); }
+  .log-detail{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--ink-soft); }
+  .log-detail .sub{ color:var(--faint); font-size:10.5px; }
+  .log-user{ color:var(--sub); font-size:11.5px; text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  .empty{ text-align:center; color:var(--sub); padding:50px 10px; font-size:13.5px; }
+  .loading{ text-align:center; color:var(--faint); padding:70px 10px; font-size:13px; font-family:var(--mono); }
+  .result-count{ font-size:11.5px; font-weight:600; color:var(--sub); margin:0 4px 10px; }
+
+  .bottom-nav{
+    position:fixed; left:0; right:0; bottom:0; z-index:50;
+    display:flex; justify-content:space-around; align-items:center;
+    background:rgba(255,255,255,.92); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    border-top:1px solid var(--line); padding:9px 0 calc(9px + env(safe-area-inset-bottom));
+    box-shadow:0 -6px 24px rgba(20,30,60,.07);
+  }
+  .nav-item{ display:flex; flex-direction:column; align-items:center; gap:3px; text-decoration:none; color:var(--faint); font-size:10.5px; font-weight:700; padding:4px 20px; border-radius:12px; }
+  .nav-item svg{ width:22px; height:22px; stroke-width:2; }
+  .nav-item.active{ color:var(--accent); }
+
+  @media (max-width:640px){
+    .log-row{ grid-template-columns:1fr; gap:4px; }
+    .log-row.head{ display:none; }
+    .log-ts{ order:1; }
+    .log-event{ order:2; justify-self:start; }
+    .log-detail{ order:3; white-space:normal; }
+    .log-user{ order:4; text-align:left; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg> ポータル</a>
+    </div>
+
+    <div class="tabs">
+      <a href="dashboard.html">📊 品質ダッシュボード</a>
+      <a href="dx-report.html">🚀 DXレポート</a>
+      <a href="audit-log.html" class="active">📋 監査ログ</a>
+    </div>
+
+    <div class="header">
+      <div class="eyebrow">Audit Log</div>
+      <h1>📋 監査ログ</h1>
+      <p>誰が・いつ・何を保存/印刷したかをすべて自動記録しています</p>
+    </div>
+
+    <div class="search-input-wrap">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="searchInput" type="text" placeholder="機種・客先・担当者・ファイル名で検索…" autocomplete="off" />
+    </div>
+
+    <div id="resultCount" class="result-count"></div>
+    <div id="logTable" class="log-table"></div>
+    <div id="loadingState" class="loading">読み込み中…</div>
+    <div id="emptyState" class="empty" style="display:none;">該当するログが見つかりません。</div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>
+      ポータル
+    </a>
+    <a href="riwayat.html" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 3"/></svg>
+      履歴
+    </a>
+    <a href="dashboard.html" class="nav-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx="1"/><rect x="12" y="8" width="3" height="10" rx="1"/><rect x="17" y="5" width="3" height="13" rx="1"/></svg>
+      ダッシュボード
+    </a>
+  </nav>
+
+  <script>
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxS2x82HUV6wBw9uZUwRw_2u8LcBhQiol8FZsGxoN_X-CywGMffWHJRMQMMkrNXqaq0Gg/exec';
+
+    const tableEl = document.getElementById('logTable');
+    const emptyEl = document.getElementById('emptyState');
+    const loadingEl = document.getElementById('loadingState');
+    const countEl = document.getElementById('resultCount');
+    const searchInput = document.getElementById('searchInput');
+    let __debounceTimer = null;
+
+    async function apiGAS(body){
+      const res = await fetch(GAS_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+      if(!res.ok) throw new Error('GAS HTTP '+res.status);
+      return await res.json();
+    }
+
+    function fmtDate(iso){
+      try{ const d = new Date(iso); return d.toLocaleString('ja-JP', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }); }
+      catch(e){ return iso || ''; }
+    }
+    function eventClass(ev){
+      if (ev === 'SAVE') return 'SAVE';
+      if (ev === 'PRINT') return 'PRINT';
+      return 'other';
+    }
+
+    function render(rows){
+      countEl.textContent = `${rows.length} 件`;
+      if (rows.length === 0){ tableEl.innerHTML=''; emptyEl.style.display = 'block'; return; }
+      emptyEl.style.display = 'none';
+
+      const head = `<div class="log-row head"><span>日時</span><span>種別</span><span>詳細</span><span>担当者</span></div>`;
+      const body = rows.map(r => `
+        <div class="log-row">
+          <span class="log-ts">${fmtDate(r.timestamp)}</span>
+          <span class="log-event ${eventClass(r.event)}">${r.event || '—'}</span>
+          <span class="log-detail">${r.customer || '—'}<br><span class="sub">${r.file_name || r.app_ns || ''}</span></span>
+          <span class="log-user">${r.inputter || '—'}</span>
+        </div>
+      `).join('');
+      tableEl.innerHTML = head + body;
+    }
+
+    async function load(query){
+      loadingEl.style.display = 'block';
+      emptyEl.style.display = 'none';
+      try{
+        const res = await apiGAS({ action:'getAuditLog', query: query || '', limit: 150 });
+        const rows = (res && res.ok && Array.isArray(res.rows)) ? res.rows : [];
+        render(rows);
+      }catch(e){
+        tableEl.innerHTML = '';
+        countEl.textContent = '';
+        emptyEl.style.display = 'block';
+        emptyEl.textContent = '読み込みに失敗しました — ' + (e.message||e);
+      }finally{
+        loadingEl.style.display = 'none';
+      }
+    }
+
+    searchInput.addEventListener('input', () => {
+      clearTimeout(__debounceTimer);
+      __debounceTimer = setTimeout(() => load(searchInput.value.trim()), 400);
+    });
+
+    load('');
+  </script>
+</body>
+</html>

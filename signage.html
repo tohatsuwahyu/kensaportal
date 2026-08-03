@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<title>TV表示 — 出荷検査成績書</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0b0e14" />
+<link rel="icon" href="tsh.png" onerror="this.remove()">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#eef1f6; --sub:#8b93a3; --faint:#5c6472; --line:#242a35;
+    --bg:#05070c; --card:#12161f;
+    --accent:#5b8cff; --accent-2:#7ba2ff;
+    --green:#2fd88a; --green-bg:#0f2a1e;
+    --fail:#ff6b6b; --fail-bg:#2c1414;
+    --amber:#f0c04a; --amber-bg:#2b2311;
+    --purple:#a78bfa;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; height:100%; overflow:hidden; }
+  body{
+    font-family:"Inter","Noto Sans JP",-apple-system,sans-serif; color:var(--ink);
+    background:
+      radial-gradient(1000px 600px at 15% -10%, rgba(91,140,255,.16), transparent 60%),
+      radial-gradient(900px 500px at 105% 15%, rgba(167,139,250,.14), transparent 55%),
+      var(--bg);
+    width:100vw; height:100vh; -webkit-font-smoothing:antialiased;
+  }
+  .frame{ width:100%; height:100%; display:flex; flex-direction:column; padding:36px 48px; }
+
+  .topbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; }
+  .brand{ display:flex; align-items:center; gap:14px; }
+  .brand-logo{ width:48px; height:48px; border-radius:14px; background:var(--card); display:flex; align-items:center; justify-content:center; font-weight:900; font-size:16px; color:var(--accent); border:1px solid var(--line); }
+  .brand-text .l1{ font-size:12px; font-weight:700; color:var(--sub); letter-spacing:.1em; text-transform:uppercase; }
+  .brand-text .l2{ font-size:20px; font-weight:800; }
+  .clock{ text-align:right; }
+  .clock .time{ font-family:var(--mono); font-size:34px; font-weight:700; letter-spacing:-.02em; }
+  .clock .date{ font-size:13px; color:var(--sub); font-weight:600; }
+
+  .slides{ flex:1; position:relative; }
+  .slide{ position:absolute; inset:0; opacity:0; pointer-events:none; transition:opacity .6s ease; display:flex; flex-direction:column; }
+  .slide.active{ opacity:1; pointer-events:auto; }
+
+  .slide-title{ font-size:14px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:.1em; margin-bottom:18px; display:flex; align-items:center; gap:10px; }
+  .live-dot{ width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-bg); animation:pulse 2s infinite; }
+  @keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:.35; } }
+
+  /* --- Slide: KPI --- */
+  .kpi-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:22px; margin-bottom:30px; }
+  .kpi-card{ background:var(--card); border:1px solid var(--line); border-radius:22px; padding:28px 26px; }
+  .kpi-label{ font-size:14px; font-weight:700; color:var(--sub); text-transform:uppercase; letter-spacing:.05em; margin-bottom:14px; }
+  .kpi-value{ font-family:var(--mono); font-size:56px; font-weight:700; letter-spacing:-.02em; }
+  .kpi-value.pass{ color:var(--green); } .kpi-value.fail{ color:var(--fail); }
+  .kpi-sub{ font-size:13px; color:var(--faint); margin-top:8px; font-family:var(--mono); }
+
+  .chart-panel{ flex:1; background:var(--card); border:1px solid var(--line); border-radius:22px; padding:28px 30px; display:flex; flex-direction:column; }
+  .chart-panel-title{ font-size:15px; font-weight:700; margin-bottom:16px; }
+  .chart-wrap{ flex:1; }
+  .chart-wrap svg{ width:100%; height:100%; }
+
+  /* --- Slide: Schedule --- */
+  .sched-grid{ flex:1; display:grid; grid-template-columns:1fr 1fr; gap:16px; align-content:start; overflow:hidden; }
+  .sched-item{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:20px 24px; display:flex; align-items:center; gap:16px; }
+  .sched-item.done{ opacity:.45; }
+  .sched-icon{ flex:0 0 auto; width:46px; height:46px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:22px; }
+  .sched-item.done .sched-icon{ background:var(--green-bg); }
+  .sched-item:not(.done) .sched-icon{ background:var(--amber-bg); }
+  .sched-main{ flex:1; min-width:0; }
+  .sched-customer{ font-size:13px; font-weight:700; color:var(--accent); }
+  .sched-title{ font-size:19px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sched-item.done .sched-title{ text-decoration:line-through; color:var(--faint); }
+  .sched-sub{ font-size:13px; color:var(--sub); margin-top:2px; }
+  .sched-count{ flex:0 0 auto; font-family:var(--mono); font-size:20px; font-weight:700; color:var(--green); }
+
+  /* --- Slide: DX Report --- */
+  .dx-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:22px; }
+  .dx-card{ background:var(--card); border:1px solid var(--line); border-radius:22px; padding:30px 26px; text-align:center; }
+  .dx-icon{ font-size:34px; margin-bottom:14px; }
+  .dx-value{ font-family:var(--mono); font-size:48px; font-weight:700; color:var(--purple); }
+  .dx-label{ font-size:14px; color:var(--sub); font-weight:600; margin-top:10px; }
+
+  .empty-note{ color:var(--faint); font-size:16px; text-align:center; padding:60px 0; }
+  .progress-dots{ display:flex; gap:8px; justify-content:center; margin-top:20px; }
+  .pdot{ width:8px; height:8px; border-radius:50%; background:var(--line); transition:all .3s ease; }
+  .pdot.active{ background:var(--accent); width:26px; border-radius:5px; }
+</style>
+</head>
+<body>
+  <div class="frame">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-logo">TSH</div>
+        <div class="brand-text">
+          <div class="l1">Quality Control</div>
+          <div class="l2">出荷検査成績書システム</div>
+        </div>
+      </div>
+      <div class="clock">
+        <div class="time" id="clockTime">--:--</div>
+        <div class="date" id="clockDate">----年--月--日</div>
+      </div>
+    </div>
+
+    <div class="slides" id="slides">
+      <div class="slide active" id="slideKpi">
+        <div class="slide-title"><span class="live-dot"></span>品質サマリー（過去30日）</div>
+        <div class="kpi-grid" id="kpiGrid"></div>
+        <div class="chart-panel">
+          <div class="chart-panel-title">月間システム操作数の推移</div>
+          <div class="chart-wrap" id="chartWrap"></div>
+        </div>
+      </div>
+
+      <div class="slide" id="slideSchedule">
+        <div class="slide-title"><span class="live-dot"></span>本日の予定</div>
+        <div class="sched-grid" id="schedGrid"></div>
+      </div>
+
+      <div class="slide" id="slideDx">
+        <div class="slide-title"><span class="live-dot"></span>DX推進サマリー</div>
+        <div class="dx-grid" id="dxGrid"></div>
+      </div>
+    </div>
+
+    <div class="progress-dots" id="progressDots"></div>
+  </div>
+
+  <script>
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxS2x82HUV6wBw9uZUwRw_2u8LcBhQiol8FZsGxoN_X-CywGMffWHJRMQMMkrNXqaq0Gg/exec';
+
+    async function apiGAS(body){
+      const res = await fetch(GAS_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+      if(!res.ok) throw new Error('GAS HTTP '+res.status);
+      return await res.json();
+    }
+
+    /* ---------- 時計 ---------- */
+    function tickClock(){
+      const now = new Date();
+      document.getElementById('clockTime').textContent = now.toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit' });
+      document.getElementById('clockDate').textContent = now.toLocaleDateString('ja-JP', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
+    }
+    tickClock(); setInterval(tickClock, 15000);
+
+    /* ---------- スライド切り替え ---------- */
+    const slideIds = ['slideKpi','slideSchedule','slideDx'];
+    let currentSlide = 0;
+    function showSlide(i){
+      slideIds.forEach((id, idx) => document.getElementById(id).classList.toggle('active', idx === i));
+      document.querySelectorAll('.pdot').forEach((d, idx) => d.classList.toggle('active', idx === i));
+    }
+    function buildDots(){
+      document.getElementById('progressDots').innerHTML = slideIds.map((_,i) => `<div class="pdot ${i===0?'active':''}"></div>`).join('');
+    }
+    buildDots();
+    setInterval(() => { currentSlide = (currentSlide + 1) % slideIds.length; showSlide(currentSlide); }, 10000);
+
+    /* ---------- スムーズ曲線チャート ---------- */
+    function smoothPath(points){
+      if (points.length < 2) return '';
+      let d = `M${points[0][0]},${points[0][1]}`;
+      for (let i=0; i<points.length-1; i++){
+        const p0 = points[i-1] || points[i], p1 = points[i], p2 = points[i+1], p3 = points[i+2] || p2;
+        const cp1x = p1[0]+(p2[0]-p0[0])/6, cp1y = p1[1]+(p2[1]-p0[1])/6;
+        const cp2x = p2[0]-(p3[0]-p1[0])/6, cp2y = p2[1]-(p3[1]-p1[1])/6;
+        d += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${p2[0]},${p2[1]}`;
+      }
+      return d;
+    }
+    function lineChartSVG(trend){
+      const w = 1000, h = 260, padL = 44, padR = 16, padT = 20, padB = 30;
+      const max = Math.max(10, ...trend.map(t=>t.count));
+      const stepX = (w-padL-padR)/(trend.length-1||1);
+      const yFor = v => padT + (h-padT-padB)*(1-v/max);
+      const points = trend.map((t,i) => [padL+stepX*i, yFor(t.count)]);
+      const linePath = smoothPath(points);
+      const areaPath = linePath + ` L${points[points.length-1][0]},${h-padB} L${points[0][0]},${h-padB} Z`;
+      const grid = [0,0.5,1].map(f => {
+        const y = padT+(h-padT-padB)*f, val = Math.round(max*(1-f));
+        return `<line x1="${padL}" y1="${y}" x2="${w-padR}" y2="${y}" stroke="#1c212c" stroke-width="1"/><text x="${padL-10}" y="${y+4}" text-anchor="end" font-size="12" fill="#5c6472" font-family="JetBrains Mono">${val}</text>`;
+      }).join('');
+      const labels = trend.map((t,i) => `<text x="${points[i][0]}" y="${h-6}" text-anchor="middle" font-size="12" fill="#5c6472" font-family="JetBrains Mono">${t.month.slice(5)}</text>`).join('');
+      const dots = points.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="4.5" fill="#5b8cff" stroke="#0b0e14" stroke-width="2"/>`).join('');
+      return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
+        <defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5b8cff" stop-opacity="0.3"/><stop offset="100%" stop-color="#5b8cff" stop-opacity="0"/></linearGradient></defs>
+        ${grid}<path d="${areaPath}" fill="url(#ag)"/><path d="${linePath}" fill="none" stroke="#5b8cff" stroke-width="3.5" stroke-linecap="round"/>${dots}${labels}
+      </svg>`;
+    }
+
+    /* ---------- データ読み込み ---------- */
+    async function loadKpi(){
+      try{
+        const res = await apiGAS({ action:'getDashboardStats', sinceDays:30 });
+        if (!res || !res.ok) return;
+        const total=res.total||0, pass=res.pass||0, fail=res.fail||0;
+        const judged = pass+fail, rate = judged>0 ? Math.round(pass/judged*100) : 0;
+        document.getElementById('kpiGrid').innerHTML = `
+          <div class="kpi-card"><div class="kpi-label">総検査数</div><div class="kpi-value">${total}</div><div class="kpi-sub">過去30日</div></div>
+          <div class="kpi-card"><div class="kpi-label">合格</div><div class="kpi-value pass">${pass}</div><div class="kpi-sub">${rate}% 合格率</div></div>
+          <div class="kpi-card"><div class="kpi-label">否</div><div class="kpi-value fail">${fail}</div><div class="kpi-sub">${judged>0?Math.round(fail/judged*100):0}%</div></div>
+          <div class="kpi-card"><div class="kpi-label">客先数</div><div class="kpi-value">${(res.byCustomer||[]).length}</div><div class="kpi-sub">アクティブ</div></div>
+        `;
+      }catch(e){}
+      try{
+        const res = await apiGAS({ action:'getDxReport' });
+        if (res && res.ok) document.getElementById('chartWrap').innerHTML = lineChartSVG(res.monthlyTrend || []);
+      }catch(e){}
+    }
+
+    async function loadSchedule(){
+      try{
+        const res = await apiGAS({ action:'getScheduleToday' });
+        const items = (res && res.ok && Array.isArray(res.items)) ? res.items : [];
+        const el = document.getElementById('schedGrid');
+        if (items.length === 0){ el.innerHTML = `<div class="empty-note" style="grid-column:1/-1;">本日の予定はまだ登録されていません</div>`; return; }
+        el.innerHTML = items.map(it => `
+          <div class="sched-item ${it.completed?'done':''}">
+            <div class="sched-icon">${it.completed ? '✅' : '⏳'}</div>
+            <div class="sched-main">
+              <div class="sched-customer">${it.customer||'—'}</div>
+              <div class="sched-title">${it.hinmei || '（品名未記入）'}</div>
+              <div class="sched-sub">${it.zuban ? '図番: '+it.zuban : ''}</div>
+            </div>
+            <div class="sched-count">${it.inspectedToday}件</div>
+          </div>
+        `).join('');
+      }catch(e){}
+    }
+
+    async function loadDx(){
+      try{
+        const res = await apiGAS({ action:'getDxReport' });
+        if (!res || !res.ok) return;
+        document.getElementById('dxGrid').innerHTML = `
+          <div class="dx-card"><div class="dx-icon">📄</div><div class="dx-value">${res.totalRecords||0}</div><div class="dx-label">登録検査総数</div></div>
+          <div class="dx-card"><div class="dx-icon">🔐</div><div class="dx-value">${res.issuedCertificates||0}</div><div class="dx-label">QR証明書発行数</div></div>
+          <div class="dx-card"><div class="dx-icon">👥</div><div class="dx-value">${res.activeUsers||0}</div><div class="dx-label">システム利用者数</div></div>
+        `;
+      }catch(e){}
+    }
+
+    function loadAll(){ loadKpi(); loadSchedule(); loadDx(); }
+    loadAll();
+    setInterval(loadAll, 60000); // 1分ごとに自動更新
+  </script>
+</body>
+</html>

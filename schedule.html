@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<title>本日の予定 — 出荷検査成績書</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5, viewport-fit=cover" />
+<meta name="theme-color" content="#1b5fd6" />
+<link rel="icon" href="tsh.png" onerror="this.remove()">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --accent:#1b5fd6; --accent-2:#3b82f6; --ink:#161b22; --sub:#68707c; --faint:#a5abb6; --line:#e7e9ee;
+    --bg-1:#eef2f8; --bg-2:#e4ebf6; --card:#ffffff;
+    --green:#0f8a53; --green-bg:#e6f7ee; --amber:#b8860b; --amber-bg:#fff6e0;
+    --shadow-sm:0 1px 2px rgba(20,30,50,.05), 0 1px 1px rgba(20,30,50,.04);
+    --shadow-md:0 8px 24px rgba(20,30,60,.08);
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  html[data-theme="dark"]{
+    --accent:#5b8cff; --accent-2:#7ba2ff; --ink:#eef1f6; --sub:#8b93a3; --faint:#5c6472; --line:#242a35;
+    --bg-1:#0b0e14; --bg-2:#11151e; --card:#12161f;
+    --green:#2fd88a; --green-bg:#0f2a1e; --amber:#f0c04a; --amber-bg:#2b2311;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.3); --shadow-md:0 8px 24px rgba(0,0,0,.4);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{
+    margin:0; font-family:"Inter","Noto Sans JP",-apple-system,sans-serif; color:var(--ink);
+    background: radial-gradient(1100px 500px at 12% -10%, rgba(77,124,240,.14) 0%, transparent 60%),
+                linear-gradient(180deg, var(--bg-1), var(--bg-2));
+    min-height:100vh; -webkit-font-smoothing:antialiased; transition:background .25s ease, color .25s ease;
+  }
+  .wrap{ max-width:760px; margin:0 auto; padding:24px 18px calc(96px + env(safe-area-inset-bottom)); }
+
+  .topbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+  .topbar a{ color:var(--sub); text-decoration:none; font-size:13px; font-weight:600; display:flex; align-items:center; gap:5px; }
+  .topbar a svg{ width:15px; height:15px; }
+  .theme-toggle{ width:34px; height:34px; border-radius:10px; border:1px solid var(--line); background:var(--card); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--ink); box-shadow:var(--shadow-sm); }
+  .theme-toggle svg{ width:16px; height:16px; }
+
+  .header{ margin-bottom:20px; }
+  .header .eyebrow{ font-size:11px; font-weight:700; color:var(--accent); letter-spacing:.08em; text-transform:uppercase; margin-bottom:6px; }
+  .header h1{ font-size:21px; font-weight:800; margin:0; }
+  .header p{ margin:6px 0 0; color:var(--sub); font-size:13px; }
+
+  .add-panel{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:18px; box-shadow:var(--shadow-sm); margin-bottom:20px; }
+  .add-panel-title{ font-size:12px; font-weight:700; color:var(--ink); margin-bottom:12px; }
+  .add-grid{ display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-bottom:9px; }
+  .add-grid input, .full-input{ width:100%; font-family:inherit; font-size:13.5px; padding:11px 12px; border-radius:10px; border:1px solid var(--line); background:var(--bg-1); color:var(--ink); outline:none; }
+  .add-grid input:focus, .full-input:focus{ border-color:var(--accent); background:var(--card); }
+  .full-input{ margin-bottom:12px; }
+  .add-btn{ width:100%; padding:12px; border-radius:11px; border:none; background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff; font-weight:700; font-size:13.5px; cursor:pointer; }
+  .add-btn:active{ transform:scale(.98); }
+
+  .result-count{ font-size:11.5px; font-weight:600; color:var(--sub); margin:0 4px 10px; }
+  .list{ display:flex; flex-direction:column; gap:9px; }
+  .item{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 15px; box-shadow:var(--shadow-sm); display:flex; align-items:center; gap:12px; }
+  .item.done{ opacity:.55; }
+  .item-check{ flex:0 0 auto; width:26px; height:26px; border-radius:8px; border:2px solid var(--line); display:flex; align-items:center; justify-content:center; cursor:pointer; color:transparent; transition:all .15s ease; }
+  .item-check.checked{ background:var(--green); border-color:var(--green); color:#fff; }
+  .item-check svg{ width:14px; height:14px; }
+  .item-main{ flex:1; min-width:0; }
+  .item-customer{ font-size:11px; font-weight:600; color:var(--accent); }
+  .item-title{ font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .item.done .item-title{ text-decoration:line-through; }
+  .item-sub{ font-size:11.5px; color:var(--sub); margin-top:2px; }
+  .item-count{ flex:0 0 auto; font-family:var(--mono); font-size:12px; font-weight:700; color:var(--green); background:var(--green-bg); padding:4px 9px; border-radius:999px; white-space:nowrap; }
+  .item-del{ flex:0 0 auto; width:28px; height:28px; border-radius:8px; border:none; background:transparent; color:var(--faint); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .item-del svg{ width:15px; height:15px; }
+
+  .empty{ text-align:center; color:var(--sub); padding:50px 10px; font-size:13.5px; }
+  .loading{ text-align:center; color:var(--faint); padding:50px 10px; font-size:13px; }
+
+  .bottom-nav{
+    position:fixed; left:0; right:0; bottom:0; z-index:50; display:flex; justify-content:space-around; align-items:center;
+    background:rgba(255,255,255,.92); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    border-top:1px solid var(--line); padding:9px 0 calc(9px + env(safe-area-inset-bottom));
+    box-shadow:0 -6px 24px rgba(20,30,60,.07);
+  }
+  html[data-theme="dark"] .bottom-nav{ background:rgba(18,22,31,.92); }
+  .nav-item{ display:flex; flex-direction:column; align-items:center; gap:3px; text-decoration:none; color:var(--faint); font-size:10.5px; font-weight:700; padding:4px 16px; border-radius:12px; }
+  .nav-item svg{ width:22px; height:22px; stroke-width:2; }
+  .nav-item.active{ color:var(--accent); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg> ポータル</a>
+      <div class="theme-toggle" id="themeToggle" title="ダーク/ライト切替">
+        <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </div>
+    </div>
+
+    <div class="header">
+      <div class="eyebrow">Today's Schedule</div>
+      <h1>📅 本日の予定</h1>
+      <p>生産管理からの出荷・検査予定を入力してください（毎朝の更新推奨）</p>
+    </div>
+
+    <div class="add-panel">
+      <div class="add-panel-title">➕ 予定を追加</div>
+      <div class="add-grid">
+        <input type="text" id="inCustomer" placeholder="客先名（例: オークマ株式会社）" />
+        <input type="text" id="inHinmei" placeholder="品名（例: Y軸SG）" />
+      </div>
+      <input type="text" id="inZuban" class="full-input" placeholder="図番（任意）" />
+      <input type="text" id="inNote" class="full-input" placeholder="メモ（任意：数量の目安、納期など）" />
+      <button class="add-btn" id="addBtn">追加する</button>
+    </div>
+
+    <div id="resultCount" class="result-count"></div>
+    <div id="list" class="list"></div>
+    <div id="loadingState" class="loading">読み込み中…</div>
+    <div id="emptyState" class="empty" style="display:none;">
+      本日の予定はまだ登録されていません。<br>上のフォームから追加してください。
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>
+      ポータル
+    </a>
+    <a href="schedule.html" class="nav-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      予定
+    </a>
+    <a href="signage.html" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      TV表示
+    </a>
+  </nav>
+
+  <script>
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxS2x82HUV6wBw9uZUwRw_2u8LcBhQiol8FZsGxoN_X-CywGMffWHJRMQMMkrNXqaq0Gg/exec';
+
+    const THEME_KEY = 'kensa:theme';
+    function applyTheme(t){
+      document.documentElement.setAttribute('data-theme', t);
+      document.getElementById('themeIcon').innerHTML = t === 'dark'
+        ? '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>'
+        : '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
+    }
+    let __theme = localStorage.getItem(THEME_KEY) || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    applyTheme(__theme);
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      __theme = __theme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem(THEME_KEY, __theme);
+      applyTheme(__theme);
+    });
+
+    const listEl = document.getElementById('list');
+    const emptyEl = document.getElementById('emptyState');
+    const loadingEl = document.getElementById('loadingState');
+    const countEl = document.getElementById('resultCount');
+
+    async function apiGAS(body){
+      const res = await fetch(GAS_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+      if(!res.ok) throw new Error('GAS HTTP '+res.status);
+      return await res.json();
+    }
+
+    function render(items){
+      countEl.textContent = `本日 ${items.length} 件の予定`;
+      if (items.length === 0){ listEl.innerHTML=''; emptyEl.style.display='block'; return; }
+      emptyEl.style.display='none';
+      listEl.innerHTML = items.map(it => `
+        <div class="item ${it.completed?'done':''}">
+          <div class="item-check ${it.completed?'checked':''}" onclick="toggleDone('${it.id}', ${!it.completed})">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          </div>
+          <div class="item-main">
+            <div class="item-customer">${it.customer || '—'}</div>
+            <div class="item-title">${it.hinmei || '（品名未記入）'}</div>
+            <div class="item-sub">${it.zuban ? '図番: '+it.zuban : ''}${it.note ? (it.zuban?' ・ ':'') + it.note : ''}</div>
+          </div>
+          <div class="item-count">${it.inspectedToday}件検査済</div>
+          <button class="item-del" onclick="deleteItem('${it.id}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    async function load(){
+      try{
+        const res = await apiGAS({ action:'getScheduleToday' });
+        const items = (res && res.ok && Array.isArray(res.items)) ? res.items : [];
+        render(items);
+      }catch(e){
+        listEl.innerHTML = '';
+        emptyEl.style.display = 'block';
+        emptyEl.textContent = '読み込みに失敗しました — ' + (e.message||e);
+      }finally{
+        loadingEl.style.display = 'none';
+      }
+    }
+
+    document.getElementById('addBtn').addEventListener('click', async () => {
+      const customer = document.getElementById('inCustomer').value.trim();
+      const hinmei = document.getElementById('inHinmei').value.trim();
+      const zuban = document.getElementById('inZuban').value.trim();
+      const note = document.getElementById('inNote').value.trim();
+      if (!customer){ alert('客先名を入力してください。'); return; }
+      try{
+        await apiGAS({ action:'addScheduleItem', customer, hinmei, zuban, note });
+        document.getElementById('inCustomer').value = '';
+        document.getElementById('inHinmei').value = '';
+        document.getElementById('inZuban').value = '';
+        document.getElementById('inNote').value = '';
+        load();
+      }catch(e){ alert('追加に失敗しました: ' + (e.message||e)); }
+    });
+
+    async function toggleDone(id, completed){
+      try{ await apiGAS({ action:'markScheduleDone', id, completed }); load(); }
+      catch(e){ alert('更新に失敗しました: ' + (e.message||e)); }
+    }
+    async function deleteItem(id){
+      if (!confirm('この予定を削除しますか？')) return;
+      try{ await apiGAS({ action:'deleteScheduleItem', id }); load(); }
+      catch(e){ alert('削除に失敗しました: ' + (e.message||e)); }
+    }
+
+    load();
+  </script>
+</body>
+</html>

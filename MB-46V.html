@@ -65,6 +65,9 @@
 
     .toolbar { position:fixed; top:8px; left:50%; transform:translateX(-50%); display:flex; flex-wrap:wrap; justify-content:center; gap:6px; max-width:96vw; padding:8px 10px; background:rgba(255,255,255,0.92); border:1px solid #ddd; border-radius:12px; box-shadow:0 2px 18px rgba(0,0,0,.12); z-index:9999; backdrop-filter:blur(4px); align-items:center; }
     .toolbar button { font-family:"Inter","Noto Sans JP",Arial,sans-serif; font-weight:600; font-size:13.5px; padding:8px 15px; border-radius:9px; border:1px solid #dde1e7; background:#fff; cursor:pointer; white-space:nowrap; flex:0 0 auto; color:#2a2f38; }
+    .toolbar-home-btn{ display:flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:9px; border:1px solid #dde1e7; background:#fff; color:#2a2f38; text-decoration:none; flex:0 0 auto; }
+    .toolbar-home-btn svg{ width:18px; height:18px; }
+    .toolbar-home-btn:hover{ filter:brightness(.96); }
     .toolbar button:hover { filter:brightness(.96); }
     .toolbar .btn-primary { background:#0a8ffc; border-color:#0a8ffc; color:#fff; font-weight:bold; }
     #missingBadge{ display:none; }
@@ -156,6 +159,9 @@
  </head>
 <body>
   <div class="toolbar">
+    <a href="index.html" class="toolbar-home-btn no-print" title="ポータルに戻る">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>
+    </a>
     <button type="button" class="btn-primary" onclick="printViaPDF()">🖨️ 印刷</button>
     <button type="button" class="btn-primary" style="position:relative;" onclick="saveToGoogleDrive()">☁️ 保存<span id="missingBadge" style="position:absolute;top:-6px;right:-6px;background:#d32f2f;color:#fff;font-size:10px;font-weight:800;min-width:16px;height:16px;border-radius:999px;align-items:center;justify-content:center;padding:0 3px;box-shadow:0 0 0 2px #fff;"></span></button>
     <details class="toolbar-menu">

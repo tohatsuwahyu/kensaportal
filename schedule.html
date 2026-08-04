@@ -6,6 +6,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5, viewport-fit=cover" />
 <meta name="theme-color" content="#1b5fd6" />
 <link rel="icon" href="tsh.png" onerror="this.remove()">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
@@ -31,7 +33,7 @@
                 linear-gradient(180deg, var(--bg-1), var(--bg-2));
     min-height:100vh; -webkit-font-smoothing:antialiased; transition:background .25s ease, color .25s ease;
   }
-  .wrap{ max-width:760px; margin:0 auto; padding:24px 18px calc(96px + env(safe-area-inset-bottom)); }
+  .wrap{ max-width:900px; margin:0 auto; padding:24px 18px calc(96px + env(safe-area-inset-bottom)); }
 
   .topbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
   .topbar a{ color:var(--sub); text-decoration:none; font-size:13px; font-weight:600; display:flex; align-items:center; gap:5px; }
@@ -44,50 +46,33 @@
   .header h1{ font-size:21px; font-weight:800; margin:0; }
   .header p{ margin:6px 0 0; color:var(--sub); font-size:13px; }
 
-  .add-panel{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:18px; box-shadow:var(--shadow-sm); margin-bottom:20px; }
-  .add-panel-title{ font-size:12px; font-weight:700; color:var(--ink); margin-bottom:12px; }
-  .add-grid{ display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-bottom:9px; }
-  .add-grid input, .full-input{ width:100%; font-family:inherit; font-size:13.5px; padding:11px 12px; border-radius:10px; border:1px solid var(--line); background:var(--bg-1); color:var(--ink); outline:none; }
-  .add-grid input:focus, .full-input:focus{ border-color:var(--accent); background:var(--card); }
-  .full-input{ margin-bottom:12px; }
-  .add-btn{ width:100%; padding:12px; border-radius:11px; border:none; background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff; font-weight:700; font-size:13.5px; cursor:pointer; }
+  .tabs{ display:flex; gap:6px; margin-bottom:18px; padding:4px; background:var(--card); border:1px solid var(--line); border-radius:13px; box-shadow:var(--shadow-sm); }
+  .tabs .tab{ flex:1; text-align:center; padding:9px 10px; border-radius:9px; font-size:12.5px; font-weight:700; cursor:pointer; color:var(--sub); }
+  .tabs .tab.active{ background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff; }
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; }
+
+  .panel{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:18px; box-shadow:var(--shadow-sm); margin-bottom:16px; }
+  .panel-title{ font-size:12px; font-weight:700; color:var(--ink); margin-bottom:12px; }
+  .field-grid{ display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-bottom:9px; }
+  .field-grid.three{ grid-template-columns:1fr 1fr 1fr; }
+  input, textarea{ width:100%; font-family:inherit; font-size:13.5px; padding:10px 12px; border-radius:10px; border:1px solid var(--line); background:var(--bg-1); color:var(--ink); outline:none; resize:vertical; }
+  input:focus, textarea:focus{ border-color:var(--accent); background:var(--card); }
+  label.f-label{ font-size:10.5px; font-weight:700; color:var(--sub); display:block; margin-bottom:4px; }
+  .full{ margin-bottom:9px; }
+  details.more{ margin-top:2px; }
+  details.more summary{ cursor:pointer; font-size:11.5px; font-weight:700; color:var(--accent); list-style:none; padding:4px 0; }
+  details.more summary::-webkit-details-marker{ display:none; }
+  .add-btn{ width:100%; padding:12px; border-radius:11px; border:none; background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff; font-weight:700; font-size:13.5px; cursor:pointer; margin-top:6px; }
   .add-btn:active{ transform:scale(.98); }
 
-  .result-count{ font-size:11.5px; font-weight:600; color:var(--sub); margin:0 4px 10px; }
-
-  /* ---------- 客先フィルタ + 印刷 ---------- */
   .toolbar-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
   .filter-chips{ display:flex; gap:7px; overflow-x:auto; padding:2px; scrollbar-width:none; flex:1; min-width:0; }
   .filter-chips::-webkit-scrollbar{ display:none; }
   .f-chip{ flex:0 0 auto; padding:7px 14px; border-radius:999px; border:1px solid var(--line); background:var(--card); font-size:12px; font-weight:600; color:var(--sub); cursor:pointer; white-space:nowrap; }
   .f-chip.active{ background:linear-gradient(135deg,var(--accent),var(--accent-2)); border-color:transparent; color:#fff; }
-  .print-btn{
-    flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:9px 15px; border-radius:11px;
-    background:linear-gradient(135deg,#0f8a53,#17b56b); color:#fff; font-size:12.5px; font-weight:700;
-    border:none; cursor:pointer; box-shadow:0 4px 14px rgba(15,138,83,.3);
-  }
-  .print-btn svg{ width:15px; height:15px; }
-  .print-btn:active{ transform:scale(.96); }
 
-  /* ---------- 印刷専用ドキュメント（画面には出さず、印刷時のみ表示） ---------- */
-  #printDoc{ display:none; }
-  @media print{
-    body *{ visibility:hidden; }
-    #printDoc, #printDoc *{ visibility:visible; }
-    #printDoc{ display:block; position:absolute; top:0; left:0; width:100%; padding:14mm; }
-    .bottom-nav, .theme-toggle{ display:none !important; }
-  }
-  .pd-header{ text-align:center; margin-bottom:8mm; }
-  .pd-company{ font-size:11pt; font-weight:700; color:#333; }
-  .pd-title{ font-size:18pt; font-weight:800; margin:2mm 0; color:#111; }
-  .pd-meta{ display:flex; justify-content:center; gap:14mm; font-size:10pt; color:#444; margin-top:2mm; }
-  .pd-meta b{ color:#111; }
-  .pd-table{ width:100%; border-collapse:collapse; margin-top:6mm; }
-  .pd-table th, .pd-table td{ border:.3mm solid #999; padding:3mm 3.5mm; font-size:10pt; text-align:left; color:#111; }
-  .pd-table th{ background:#f0f0f0; font-weight:700; }
-  .pd-status{ font-weight:700; }
-  .pd-footer{ margin-top:12mm; display:flex; justify-content:space-between; font-size:9.5pt; color:#555; }
-  .pd-footer .sign{ border-top:.3mm solid #999; padding-top:2mm; width:50mm; text-align:center; }
+  .result-count{ font-size:11.5px; font-weight:600; color:var(--sub); margin:0 4px 10px; }
   .list{ display:flex; flex-direction:column; gap:9px; }
   .item{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 15px; box-shadow:var(--shadow-sm); display:flex; align-items:center; gap:12px; }
   .item.done{ opacity:.55; }
@@ -98,24 +83,47 @@
   .item-customer{ font-size:11px; font-weight:600; color:var(--accent); }
   .item-title{ font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .item.done .item-title{ text-decoration:line-through; }
-  .item-sub{ font-size:11.5px; color:var(--sub); margin-top:2px; }
+  .item-sub{ font-size:11.5px; color:var(--sub); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .item-count{ flex:0 0 auto; font-family:var(--mono); font-size:12px; font-weight:700; color:var(--green); background:var(--green-bg); padding:4px 9px; border-radius:999px; white-space:nowrap; }
-  .item-del{ flex:0 0 auto; width:28px; height:28px; border-radius:8px; border:none; background:transparent; color:var(--faint); cursor:pointer; display:flex; align-items:center; justify-content:center; }
-  .item-del svg{ width:15px; height:15px; }
+  .item-del{ flex:0 0 auto; width:28px; height:28px; border-radius:8px; border:none; background:transparent; color:var(--faint); cursor:pointer; }
+
+  .action-row{ display:flex; gap:9px; flex-wrap:wrap; }
+  .act-btn{ flex:1; min-width:130px; display:flex; align-items:center; justify-content:center; gap:7px; padding:12px; border-radius:11px; font-size:12.5px; font-weight:700; border:none; cursor:pointer; }
+  .act-btn svg{ width:15px; height:15px; }
+  .act-btn.pdf{ background:linear-gradient(135deg,#7c3aed,#a78bfa); color:#fff; }
+  .act-btn.print{ background:linear-gradient(135deg,#0f8a53,#17b56b); color:#fff; }
+  .act-btn.mail{ background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff; }
+  .act-btn:active{ transform:scale(.97); }
 
   .empty{ text-align:center; color:var(--sub); padding:50px 10px; font-size:13.5px; }
   .loading{ text-align:center; color:var(--faint); padding:50px 10px; font-size:13px; }
+  .toast{ position:fixed; bottom:100px; left:50%; transform:translateX(-50%) translateY(20px); opacity:0; background:var(--ink); color:var(--bg-1); font-size:12.5px; font-weight:600; padding:11px 20px; border-radius:11px; box-shadow:var(--shadow-md); z-index:100; transition:all .25s cubic-bezier(.16,1,.3,1); pointer-events:none; max-width:80vw; text-align:center; }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* ---------- 印刷/PDF専用ドキュメント（隠す） ---------- */
+  #printArea{ position:fixed; left:-9999px; top:0; width:190mm; background:#fff; color:#111; padding:10mm; font-family:"Noto Sans JP",sans-serif; }
+  #printArea .p-top{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:2mm; }
+  #printArea .p-customer{ font-size:13pt; font-weight:700; }
+  #printArea .p-contacts{ font-size:9.5pt; color:#333; margin-top:1mm; }
+  #printArea .p-company{ font-size:10pt; font-weight:700; }
+  #printArea .p-title{ text-align:center; font-size:19pt; font-weight:800; margin:5mm 0 6mm; }
+  #printArea .p-meta{ text-align:right; font-size:9.5pt; line-height:1.8; margin-bottom:5mm; }
+  #printArea .p-group-title{ font-weight:700; font-size:10.5pt; margin:4mm 0 1.5mm; border-bottom:.4mm solid #333; padding-bottom:1mm; }
+  #printArea table{ width:100%; border-collapse:collapse; margin-bottom:4mm; }
+  #printArea th, #printArea td{ border:.3mm solid #999; padding:2.6mm 3mm; font-size:9.5pt; text-align:center; white-space:pre-line; vertical-align:middle; }
+  #printArea th{ background:#eef0f3; font-weight:700; }
 
   .bottom-nav{
     position:fixed; left:0; right:0; bottom:0; z-index:50; display:flex; justify-content:space-around; align-items:center;
     background:rgba(255,255,255,.92); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
-    border-top:1px solid var(--line); padding:9px 0 calc(9px + env(safe-area-inset-bottom));
-    box-shadow:0 -6px 24px rgba(20,30,60,.07);
+    border-top:1px solid var(--line); padding:9px 0 calc(9px + env(safe-area-inset-bottom)); box-shadow:0 -6px 24px rgba(20,30,60,.07);
   }
   html[data-theme="dark"] .bottom-nav{ background:rgba(18,22,31,.92); }
-  .nav-item{ display:flex; flex-direction:column; align-items:center; gap:3px; text-decoration:none; color:var(--faint); font-size:10.5px; font-weight:700; padding:4px 16px; border-radius:12px; }
+  .nav-item{ display:flex; flex-direction:column; align-items:center; gap:3px; text-decoration:none; color:var(--faint); font-size:10.5px; font-weight:700; padding:4px 20px; border-radius:12px; }
   .nav-item svg{ width:22px; height:22px; stroke-width:2; }
   .nav-item.active{ color:var(--accent); }
+
+  @media (max-width:560px){ .field-grid, .field-grid.three{ grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
@@ -129,27 +137,36 @@
 
     <div class="header">
       <div class="eyebrow">Today's Schedule</div>
-      <h1>📅 本日の予定</h1>
-      <p>生産管理からの出荷・検査予定を入力してください（毎朝の更新推奨）</p>
+      <h1>📅 本日の予定 ／ 出荷確認書</h1>
+      <p>1回入力すれば、社内の進捗管理にも客先向け出荷確認書にもそのまま使えます</p>
     </div>
 
-    <div class="add-panel">
-      <div class="add-panel-title">➕ 予定を追加</div>
-      <div class="add-grid">
-        <input type="text" id="inCustomer" placeholder="客先名（例: オークマ株式会社）" />
-        <input type="text" id="inHinmei" placeholder="品名（例: Y軸SG）" />
+    <div class="panel">
+      <div class="panel-title">➕ 予定を追加</div>
+      <div class="field-grid">
+        <div><label class="f-label">客先名</label><input id="inCustomer" placeholder="例: オークマ株式会社" /></div>
+        <div><label class="f-label">品名</label><input id="inHinmei" placeholder="例: Y軸SG" /></div>
       </div>
-      <input type="text" id="inZuban" class="full-input" placeholder="図番（任意）" />
-      <input type="text" id="inNote" class="full-input" placeholder="メモ（任意：数量の目安、納期など）" />
+      <div class="field-grid">
+        <div><label class="f-label">図番</label><input id="inZuban" placeholder="任意" /></div>
+        <div><label class="f-label">機種</label><input id="inKikishu" placeholder="任意" /></div>
+      </div>
+      <details class="more">
+        <summary>＋ 出荷確認書に必要な項目も入力する（数量・送り先・注番など）</summary>
+        <div class="field-grid three" style="margin-top:8px;">
+          <div><label class="f-label">数量</label><input id="inQty" type="number" placeholder="1" /></div>
+          <div><label class="f-label">送り先</label><input id="inDestination" placeholder="例: 可児PDC" /></div>
+          <div><label class="f-label">備考</label><input id="inRemarks" placeholder="例: (1/3分納)" /></div>
+        </div>
+        <div class="full"><label class="f-label">注番（1行に1件、複数OK）</label><textarea id="inOrderNo" rows="2" placeholder="BJ-31653868-010-2"></textarea></div>
+        <div class="full"><label class="f-label">グループ見出し（複数客先向けをまとめる場合。例: オークマ様向け）</label><input id="inGroup" placeholder="任意" /></div>
+        <div class="full"><label class="f-label">メモ（社内用）</label><input id="inNote" placeholder="任意" /></div>
+      </details>
       <button class="add-btn" id="addBtn">追加する</button>
     </div>
 
     <div class="toolbar-row">
       <div class="filter-chips" id="filterChips"></div>
-      <button class="print-btn" id="printBtn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>
-        出荷予定表を印刷
-      </button>
     </div>
 
     <div id="resultCount" class="result-count"></div>
@@ -158,26 +175,53 @@
     <div id="emptyState" class="empty" style="display:none;">
       本日の予定はまだ登録されていません。<br>上のフォームから追加してください。
     </div>
-  </div>
 
-  <!-- 印刷専用：画面には表示されず、印刷/PDF化した時だけ見える出荷予定表 -->
-  <div id="printDoc">
-    <div class="pd-header">
-      <div class="pd-company">東京精密発條株式会社</div>
-      <div class="pd-title">出荷予定表</div>
-      <div class="pd-meta">
-        <span>発行日: <b id="pdDate"></b></span>
-        <span>客先: <b id="pdCustomer"></b></span>
+    <div class="panel">
+      <div class="panel-title">🚚 出荷確認書として出力（現在絞り込み中の内容が対象）</div>
+      <div class="field-grid" style="margin-bottom:9px;">
+        <div><label class="f-label">敬称（客先名の後ろに付けます）</label><input id="shHonorific" placeholder="御中" value="御中" /></div>
+        <div><label class="f-label">宛先ご担当者（任意）</label><input id="shContacts" placeholder="例: 楠様・大橋様" /></div>
+      </div>
+      <div class="full"><label class="f-label">運送会社（車番・携帯番号なども含めて自由記入）</label><input id="shShipping" placeholder="例: 大丸運輸倉庫　下野　車番：4325　携帯：090-3221-7339" /></div>
+      <div class="field-grid">
+        <div><label class="f-label">出荷日</label><input id="shShipDate" type="date" /></div>
+        <div><label class="f-label">納入日</label><input id="shDeliveryDate" type="date" /></div>
+      </div>
+      <div class="action-row" style="margin-top:10px;">
+        <button class="act-btn print" id="btnPrint">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>
+          印刷
+        </button>
+        <button class="act-btn pdf" id="btnPdf">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 10l5 5 5-5"/><path d="M4 21h16"/></svg>
+          PDFダウンロード
+        </button>
+        <button class="act-btn mail" id="btnMail">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>
+          メールで送信
+        </button>
       </div>
     </div>
-    <table class="pd-table">
-      <thead><tr><th>品名</th><th>図番</th><th>メモ</th><th>検査状況</th></tr></thead>
-      <tbody id="pdTableBody"></tbody>
-    </table>
-    <div class="pd-footer">
-      <div>東京精密発條株式会社　品質保証部</div>
-      <div class="sign">承認</div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- 印刷/PDF専用（画面には見えない） -->
+  <div id="printArea">
+    <div class="p-top">
+      <div>
+        <div class="p-customer" id="pCustomer"></div>
+        <div class="p-contacts" id="pContacts"></div>
+      </div>
+      <div class="p-company">東京精密発條株式会社</div>
     </div>
+    <div class="p-title">出荷確認書</div>
+    <div class="p-meta">
+      <div>運送会社: <span id="pShipping"></span></div>
+      <div>出荷日: <span id="pShipDate"></span></div>
+      <div>納入日: <span id="pDeliveryDate"></span></div>
+    </div>
+    <div id="pGroups"></div>
   </div>
 
   <nav class="bottom-nav">
@@ -213,16 +257,22 @@
       applyTheme(__theme);
     });
 
-    const listEl = document.getElementById('list');
-    const emptyEl = document.getElementById('emptyState');
-    const loadingEl = document.getElementById('loadingState');
-    const countEl = document.getElementById('resultCount');
+    function showToast(msg){
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2600);
+    }
 
     async function apiGAS(body){
       const res = await fetch(GAS_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
       if(!res.ok) throw new Error('GAS HTTP '+res.status);
       return await res.json();
     }
+
+    const listEl = document.getElementById('list');
+    const emptyEl = document.getElementById('emptyState');
+    const loadingEl = document.getElementById('loadingState');
+    const countEl = document.getElementById('resultCount');
 
     let __allItems = [];
     let __activeCustomer = null;
@@ -247,10 +297,16 @@
       });
     }
 
+    function currentFiltered(){
+      return __activeCustomer ? __allItems.filter(it => it.customer === __activeCustomer) : __allItems;
+    }
+
     function renderFiltered(){
       buildFilterChips();
-      const filtered = __activeCustomer ? __allItems.filter(it => it.customer === __activeCustomer) : __allItems;
-      render(filtered);
+      render(currentFiltered());
+      // 客先を1つに絞ったら、出荷確認書の客先名も自動で入れておく（毎回打たなくて済むように）
+      const shCustomerHint = __activeCustomer || '';
+      if (shCustomerHint) document.title = `本日の予定 — ${shCustomerHint}`;
     }
 
     function render(items){
@@ -263,9 +319,9 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
           </div>
           <div class="item-main">
-            <div class="item-customer">${it.customer || '—'}</div>
+            <div class="item-customer">${it.customer || '—'}${it.group ? ' ・ '+it.group : ''}</div>
             <div class="item-title">${it.hinmei || '（品名未記入）'}</div>
-            <div class="item-sub">${it.zuban ? '図番: '+it.zuban : ''}${it.note ? (it.zuban?' ・ ':'') + it.note : ''}</div>
+            <div class="item-sub">${it.zuban ? '図番: '+it.zuban : ''}${it.qty ? ' ・ 数量: '+it.qty : ''}${it.note ? ' ・ ' + it.note : ''}</div>
           </div>
           <div class="item-count">${it.inspectedToday}件検査済</div>
           <button class="item-del" onclick="deleteItem('${it.id}')">
@@ -289,40 +345,25 @@
       }
     }
 
-    /* ---------- 出荷予定表の印刷（現在の絞り込みに合わせて印刷） ---------- */
-    function statusLabel(it){
-      if (it.completed) return '検査完了 ✓';
-      if (it.inspectedToday > 0) return `検査中（${it.inspectedToday}件）`;
-      return '未着手';
-    }
-    document.getElementById('printBtn').addEventListener('click', () => {
-      const filtered = __activeCustomer ? __allItems.filter(it => it.customer === __activeCustomer) : __allItems;
-      if (filtered.length === 0){ alert('印刷する予定がありません。'); return; }
-      document.getElementById('pdDate').textContent = new Date().toLocaleDateString('ja-JP', { year:'numeric', month:'long', day:'numeric' });
-      document.getElementById('pdCustomer').textContent = __activeCustomer || 'すべて（社内確認用）';
-      document.getElementById('pdTableBody').innerHTML = filtered.map(it => `
-        <tr>
-          <td>${it.hinmei || '—'}</td>
-          <td>${it.zuban || '—'}</td>
-          <td>${it.note || ''}</td>
-          <td class="pd-status">${statusLabel(it)}</td>
-        </tr>
-      `).join('');
-      window.print();
-    });
-
     document.getElementById('addBtn').addEventListener('click', async () => {
       const customer = document.getElementById('inCustomer').value.trim();
-      const hinmei = document.getElementById('inHinmei').value.trim();
-      const zuban = document.getElementById('inZuban').value.trim();
-      const note = document.getElementById('inNote').value.trim();
       if (!customer){ alert('客先名を入力してください。'); return; }
+      const payload = {
+        customer,
+        hinmei: document.getElementById('inHinmei').value.trim(),
+        zuban: document.getElementById('inZuban').value.trim(),
+        kikishu: document.getElementById('inKikishu').value.trim(),
+        qty: document.getElementById('inQty').value.trim(),
+        destination: document.getElementById('inDestination').value.trim(),
+        remarks: document.getElementById('inRemarks').value.trim(),
+        orderNo: document.getElementById('inOrderNo').value.trim(),
+        group: document.getElementById('inGroup').value.trim(),
+        note: document.getElementById('inNote').value.trim(),
+      };
       try{
-        await apiGAS({ action:'addScheduleItem', customer, hinmei, zuban, note });
-        document.getElementById('inCustomer').value = '';
-        document.getElementById('inHinmei').value = '';
-        document.getElementById('inZuban').value = '';
-        document.getElementById('inNote').value = '';
+        await apiGAS({ action:'addScheduleItem', ...payload });
+        ['inCustomer','inHinmei','inZuban','inKikishu','inQty','inDestination','inRemarks','inOrderNo','inGroup','inNote']
+          .forEach(id => document.getElementById(id).value = '');
         load();
       }catch(e){ alert('追加に失敗しました: ' + (e.message||e)); }
     });
@@ -336,6 +377,113 @@
       try{ await apiGAS({ action:'deleteScheduleItem', id }); load(); }
       catch(e){ alert('削除に失敗しました: ' + (e.message||e)); }
     }
+
+    /* ---------- 出荷確認書として印刷/PDF/メール ---------- */
+    function fmtDate(iso){
+      if (!iso) return '—';
+      const d = new Date(iso + 'T00:00:00');
+      return d.toLocaleDateString('ja-JP', { year:'numeric', month:'long', day:'numeric' });
+    }
+
+    function buildPrintDoc(){
+      const items = currentFiltered();
+      if (items.length === 0){ alert('印刷する予定がありません。客先を絞り込むか、予定を追加してください。'); return false; }
+
+      const customerBase = __activeCustomer || document.getElementById('inCustomer').value.trim() || '客先未選択';
+      const honorific = document.getElementById('shHonorific').value.trim();
+      document.getElementById('pCustomer').textContent = customerBase + (honorific ? ' '+honorific : '');
+      document.getElementById('pContacts').textContent = document.getElementById('shContacts').value.trim();
+      document.getElementById('pShipping').textContent = document.getElementById('shShipping').value.trim() || '—';
+      document.getElementById('pShipDate').textContent = fmtDate(document.getElementById('shShipDate').value);
+      document.getElementById('pDeliveryDate').textContent = fmtDate(document.getElementById('shDeliveryDate').value);
+
+      const groups = {}; const order = [];
+      items.forEach(it => {
+        const g = it.group || '__NOGROUP__';
+        if (!groups[g]) { groups[g] = []; order.push(g); }
+        groups[g].push(it);
+      });
+
+      const html = order.map(g => {
+        const rows = groups[g].map(it => `
+          <tr>
+            <td>${it.zuban||''}</td>
+            <td>${it.kikishu||''}</td>
+            <td>${it.hinmei||''}</td>
+            <td>${it.qty||''}</td>
+            <td>${it.destination||''}</td>
+            <td>${it.orderNo||''}</td>
+            <td>${it.remarks||''}</td>
+          </tr>`).join('');
+        const groupTitle = g !== '__NOGROUP__' ? `<div class="p-group-title">${g}</div>` : '';
+        return `${groupTitle}<table><thead><tr><th>図番</th><th>機種</th><th>商品名</th><th>数量</th><th>送り先</th><th>注番</th><th>備考</th></tr></thead><tbody>${rows}</tbody></table>`;
+      }).join('');
+      document.getElementById('pGroups').innerHTML = html;
+      return true;
+    }
+
+    async function buildPdfBlob(){
+      const el = document.getElementById('printArea');
+      const prevLeft = el.style.left;
+      el.style.left = '0px'; el.style.zIndex = '-1';
+      try{
+        const canvas = await html2canvas(el, { scale:2, backgroundColor:'#FFFFFF' });
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+        const pageW = 210, pageH = 297, margin = 10;
+        const imgW = pageW - margin*2;
+        const imgH = canvas.height * imgW / canvas.width;
+        const usableH = pageH - margin*2;
+        const imgData = canvas.toDataURL('image/png');
+        let heightLeft = imgH, position = margin;
+        doc.addImage(imgData, 'PNG', margin, position, imgW, imgH);
+        heightLeft -= usableH;
+        while (heightLeft > 0){
+          position -= usableH;
+          doc.addPage();
+          doc.addImage(imgData, 'PNG', margin, position, imgW, imgH);
+          heightLeft -= usableH;
+        }
+        return doc;
+      } finally {
+        el.style.left = prevLeft; el.style.zIndex = '';
+      }
+    }
+
+    document.getElementById('btnPrint').addEventListener('click', async () => {
+      if (!buildPrintDoc()) return;
+      const doc = await buildPdfBlob();
+      doc.autoPrint();
+      window.open(doc.output('bloburl'), '_blank');
+    });
+
+    document.getElementById('btnPdf').addEventListener('click', async () => {
+      if (!buildPrintDoc()) return;
+      const doc = await buildPdfBlob();
+      const customer = (__activeCustomer || 'customer').replace(/[\\/:*?"<>|]/g,'');
+      const ymd = new Date().toISOString().slice(0,10).replace(/-/g,'');
+      doc.save(`出荷確認書_${customer}_${ymd}.pdf`);
+    });
+
+    document.getElementById('btnMail').addEventListener('click', async () => {
+      if (!buildPrintDoc()) return;
+      const to = prompt('送信先メールアドレスを入力してください：');
+      if (!to) return;
+      showToast('送信準備中…');
+      try{
+        const doc = await buildPdfBlob();
+        const pdfBase64 = doc.output('datauristring').split(',')[1];
+        const customer = __activeCustomer || '';
+        const res = await apiGAS({
+          action:'sendShipmentEmail', to,
+          subject: `出荷確認書のご案内（${customer}）`,
+          filename: `出荷確認書_${customer.replace(/[\\/:*?"<>|]/g,'')||'no-customer'}.pdf`,
+          pdfBase64
+        });
+        if (res && res.ok) showToast('✅ メールを送信しました');
+        else throw new Error(res && res.message || '送信に失敗しました');
+      }catch(e){ showToast('⚠️ 送信失敗: ' + (e.message||e)); }
+    });
 
     load();
   </script>

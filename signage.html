@@ -39,6 +39,14 @@
   .brand-text .l2{ font-size:20px; font-weight:800; }
   .clock{ text-align:right; }
   .clock .time{ font-family:var(--mono); font-size:34px; font-weight:700; letter-spacing:-.02em; }
+  .topbar-right-group{ display:flex; align-items:center; }
+  .close-btn{
+    margin-left:20px; flex:0 0 auto; width:38px; height:38px; border-radius:12px; background:var(--card);
+    border:1px solid var(--line); display:flex; align-items:center; justify-content:center; color:var(--faint);
+    text-decoration:none; opacity:.5; transition:opacity .2s ease;
+  }
+  .close-btn:hover{ opacity:1; color:var(--fail); }
+  .close-btn svg{ width:18px; height:18px; }
   .clock .date{ font-size:13px; color:var(--sub); font-weight:600; }
 
   .slides{ flex:1; position:relative; }
@@ -99,9 +107,14 @@
           <div class="l2">出荷検査成績書システム</div>
         </div>
       </div>
-      <div class="clock">
-        <div class="time" id="clockTime">--:--</div>
-        <div class="date" id="clockDate">----年--月--日</div>
+      <div class="topbar-right-group">
+        <div class="clock">
+          <div class="time" id="clockTime">--:--</div>
+          <div class="date" id="clockDate">----年--月--日</div>
+        </div>
+        <a href="index.html" class="close-btn" title="TV表示を終了 (Esc)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </a>
       </div>
     </div>
 
@@ -145,6 +158,7 @@
       document.getElementById('clockDate').textContent = now.toLocaleDateString('ja-JP', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
     }
     tickClock(); setInterval(tickClock, 15000);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.location.href = 'index.html'; });
 
     /* ---------- スライド切り替え ---------- */
     const slideIds = ['slideKpi','slideSchedule','slideDx'];

@@ -43,7 +43,9 @@
   .wrap{ max-width:860px; margin:0 auto; padding:18px 18px calc(96px + env(safe-area-inset-bottom)); }
 
   /* ---------- App bar ---------- */
-  .appbar{ display:flex; align-items:center; gap:8px; padding:4px 2px 20px; flex-wrap:wrap; row-gap:8px; }
+  .appbar{ display:flex; align-items:center; gap:10px; padding:4px 2px 12px; }
+  .appbar-actions{ display:flex; gap:8px; overflow-x:auto; padding:2px 2px 18px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+  .appbar-actions::-webkit-scrollbar{ display:none; }
   .appbar .logo{
     width:42px; height:42px; border-radius:12px; background:var(--card); flex:0 0 auto;
     display:flex; align-items:center; justify-content:center; overflow:hidden; box-shadow:var(--shadow-sm);
@@ -52,7 +54,7 @@
   .appbar .logo-fallback{ width:100%; height:100%; display:none; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff; font-weight:800; font-size:13px; }
   .appbar-text{ flex:1; min-width:0; }
   .appbar-text .eyebrow{ font-size:10.5px; font-weight:700; color:var(--accent); letter-spacing:.09em; text-transform:uppercase; }
-  .appbar-text h1{ font-size:18px; font-weight:800; margin:1px 0 0; letter-spacing:-.01em; }
+  .appbar-text h1{ font-size:18px; font-weight:800; margin:1px 0 0; letter-spacing:-.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .dx-badge{
     flex:0 0 auto; display:flex; align-items:center; gap:5px; font-size:10px; font-weight:700;
     color:#8a5a00; background:linear-gradient(135deg,#fff4d6,#ffe9b3); border:1px solid #f0d28a;
@@ -97,23 +99,59 @@
 
   .result-count{ font-size:12px; font-weight:600; color:var(--sub); margin:16px 4px 8px; letter-spacing:.01em; }
 
-  /* ---------- List ---------- */
-  .list{ display:flex; flex-direction:column; gap:9px; }
+  /* ---------- Category tiles (HyperMart風) ---------- */
+  .cat-section{ margin-bottom:20px; }
+  .cat-section-title{ font-size:12.5px; font-weight:700; color:var(--ink); margin:0 2px 10px; display:flex; align-items:center; justify-content:space-between; }
+  .cat-section-title span.sub{ font-size:11px; font-weight:600; color:var(--faint); }
+  .cat-grid{ display:flex; gap:10px; overflow-x:auto; padding:2px 2px 6px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+  .cat-grid::-webkit-scrollbar{ display:none; }
+  .cat-tile{
+    flex:0 0 auto; width:84px; display:flex; flex-direction:column; align-items:center; gap:7px;
+    cursor:pointer; padding:2px; border-radius:16px; transition:transform .12s ease;
+  }
+  .cat-tile:active{ transform:scale(.94); }
+  .cat-tile-icon{
+    width:68px; height:68px; border-radius:19px; display:flex; align-items:center; justify-content:center;
+    font-size:24px; font-weight:800; color:#fff; box-shadow:0 6px 16px -4px var(--tile-shadow, rgba(27,95,214,.35));
+    position:relative; border:2.5px solid transparent;
+  }
+  .cat-tile-icon svg{ width:26px; height:26px; }
+  .cat-tile.active .cat-tile-icon{ border-color:var(--ink); }
+  .cat-tile-count{
+    position:absolute; top:-4px; right:-4px; background:#fff; color:#1a1d23; font-size:9.5px; font-weight:800;
+    min-width:18px; height:18px; border-radius:999px; display:flex; align-items:center; justify-content:center;
+    padding:0 4px; box-shadow:0 2px 6px rgba(0,0,0,.15);
+  }
+  .cat-tile-label{ font-size:10.5px; font-weight:700; color:var(--ink); text-align:center; line-height:1.25; }
+
+  /* ---------- List / product-cards ---------- */
+  .list{ display:flex; flex-direction:column; gap:12px; }
   .card{
-    display:flex; align-items:center; gap:13px; background:var(--card); border-radius:var(--radius-md);
-    padding:13px 15px; box-shadow:var(--shadow-sm); text-decoration:none; color:inherit; border:1px solid var(--line);
+    display:flex; align-items:stretch; gap:0; background:var(--card); border-radius:20px;
+    overflow:hidden; box-shadow:var(--shadow-sm); text-decoration:none; color:inherit; border:1px solid var(--line);
     transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
   }
   .card:active{ transform:scale(.98); }
   @media (hover:hover){ .card:hover{ box-shadow:var(--shadow-md); border-color:#d3ddf0; transform:translateY(-1px); } }
-  .card-icon{
-    flex:0 0 auto; width:44px; height:44px; border-radius:13px;
-    display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:800; color:#fff;
+  .card-hero{
+    flex:0 0 auto; width:84px; display:flex; align-items:center; justify-content:center; position:relative;
+    font-size:30px; font-weight:800; color:#fff;
   }
+  .card-hero svg{ width:32px; height:32px; position:relative; z-index:1; }
+  .card-hero::after{
+    content:''; position:absolute; inset:0;
+    background:radial-gradient(120% 120% at 20% 15%, rgba(255,255,255,.28), transparent 60%);
+  }
+  .card-badge{
+    position:absolute; top:8px; left:8px; background:rgba(255,255,255,.92); color:#1a1d23;
+    font-size:9px; font-weight:800; padding:3px 7px; border-radius:999px; letter-spacing:.02em;
+  }
+  .card-body{ flex:1 1 auto; min-width:0; padding:14px 15px; display:flex; align-items:center; gap:10px; }
   .card-main{ flex:1 1 auto; min-width:0; }
   .card-customer{ font-size:11.5px; font-weight:600; color:var(--accent); margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:.01em; }
-  .card-title{ font-size:15px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .card-sub{ font-size:12px; color:var(--sub); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .card-title{ font-size:15.5px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .card-sub{ font-size:12px; color:var(--sub); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:5px; }
+  .card-sub .dot{ width:4px; height:4px; border-radius:50%; background:var(--faint); flex:0 0 auto; }
   .card-arrow{ flex:0 0 auto; color:#c3ccdb; transition:transform .12s ease, color .12s ease; }
   .card-arrow svg{ width:18px; height:18px; }
   .card:hover .card-arrow{ transform:translateX(2px); color:var(--accent); }
@@ -155,13 +193,16 @@
         <div class="eyebrow">Tokyo Seimitsu Hatsujo</div>
         <h1>出荷検査成績書</h1>
       </div>
+      <div class="theme-toggle" id="themeToggle" title="ダーク/ライト切替">
+        <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </div>
+    </div>
+    <div class="appbar-actions">
       <a href="manual.html" class="dx-badge" style="text-decoration:none; background:linear-gradient(135deg,#eaf1ff,#f3f7ff); color:var(--accent); border-color:#dde6f9;" title="使い方ガイド">❓ 使い方</a>
       <a href="schedule.html" class="dx-badge" style="text-decoration:none; background:linear-gradient(135deg,#eaf7f0,#f2fbf6); color:#0f8a53; border-color:#cdeedd;" title="本日の予定">📅 予定</a>
       <a href="signage.html" class="dx-badge" style="text-decoration:none; background:linear-gradient(135deg,#f3edfd,#f8f4fe); color:#7c3aed; border-color:#e3d5fb;" title="TV表示モード">📺 TV表示</a>
       <div class="dx-badge" title="ペーパーレス化・自動化によるDX推進の取り組みです">🚀 DX推進</div>
-      <div class="theme-toggle" id="themeToggle" title="ダーク/ライト切替">
-        <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-      </div>
+    </div>
     </div>
 
     <div class="stats-row" id="statsRow">
@@ -182,11 +223,15 @@
       </div>
     </div>
 
+    <div class="cat-section">
+      <div class="cat-section-title">客先から探す <span class="sub">タップで絞り込み</span></div>
+      <div class="cat-grid" id="catGrid"></div>
+    </div>
+
     <div class="search-input-wrap">
       <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       <input id="searchInput" type="text" placeholder="客先・機種・品名・図番で検索…" autocomplete="off" />
     </div>
-    <div id="chips" class="chips"></div>
 
     <div id="resultCount" class="result-count"></div>
     <div id="list" class="list"></div>
@@ -255,7 +300,7 @@
     }
 
     const searchInput = document.getElementById('searchInput');
-    const chipsEl = document.getElementById('chips');
+    const catGridEl = document.getElementById('catGrid');
     const listEl = document.getElementById('list');
     const emptyEl = document.getElementById('emptyState');
     const countEl = document.getElementById('resultCount');
@@ -264,29 +309,46 @@
 
     function initials(str){ const s=(str||'').trim(); return s ? s[0] : '?'; }
 
-    function buildChips(){
+    const QC_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>';
+
+    function buildCatTiles(){
       const customers = [...new Set(FORM_REGISTRY.map(f => f.customer))].sort((a,b)=>a.localeCompare(b,'ja'));
-      chipsEl.innerHTML = '';
-      const allChip = document.createElement('div');
-      allChip.className = 'chip active';
-      allChip.textContent = `すべて (${FORM_REGISTRY.length})`;
-      allChip.onclick = () => { activeCustomer = null; render(); };
-      chipsEl.appendChild(allChip);
+      catGridEl.innerHTML = '';
+
+      const allTile = document.createElement('div');
+      allTile.className = 'cat-tile active';
+      allTile.innerHTML = `
+        <div class="cat-tile-icon" style="background:linear-gradient(135deg,var(--accent),var(--accent-2));">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          <span class="cat-tile-count">${FORM_REGISTRY.length}</span>
+        </div>
+        <div class="cat-tile-label">すべて</div>
+      `;
+      allTile.onclick = () => { activeCustomer = null; render(); };
+      catGridEl.appendChild(allTile);
+
       customers.forEach(c => {
         const n = FORM_REGISTRY.filter(f => f.customer === c).length;
-        const chip = document.createElement('div');
-        chip.className = 'chip';
-        chip.textContent = `${c} (${n})`;
-        chip.dataset.customer = c;
-        chip.onclick = () => { activeCustomer = c; render(); };
-        chipsEl.appendChild(chip);
+        const color = colorFor(c);
+        const tile = document.createElement('div');
+        tile.className = 'cat-tile';
+        tile.dataset.customer = c;
+        tile.innerHTML = `
+          <div class="cat-tile-icon" style="background:${color}; --tile-shadow:${color}59;">
+            ${QC_ICON}
+            <span class="cat-tile-count">${n}</span>
+          </div>
+          <div class="cat-tile-label">${c.length > 8 ? c.slice(0,7)+'…' : c}</div>
+        `;
+        tile.onclick = () => { activeCustomer = c; render(); };
+        catGridEl.appendChild(tile);
       });
     }
 
-    function updateChipStyles(){
-      Array.from(chipsEl.children).forEach(chip => {
-        const isAll = !chip.dataset.customer;
-        chip.classList.toggle('active', isAll ? activeCustomer === null : chip.dataset.customer === activeCustomer);
+    function updateCatTiles(){
+      Array.from(catGridEl.children).forEach(tile => {
+        const isAll = !tile.dataset.customer;
+        tile.classList.toggle('active', isAll ? activeCustomer === null : tile.dataset.customer === activeCustomer);
       });
     }
 
@@ -297,7 +359,7 @@
     }
 
     function render(){
-      updateChipStyles();
+      updateCatTiles();
       const q = searchInput.value.trim();
       const filtered = FORM_REGISTRY.filter(f => (activeCustomer === null || f.customer === activeCustomer) && matches(f, q));
 
@@ -315,20 +377,25 @@
           a.href = f.file;
           const c = colorFor(f.customer);
           a.innerHTML = `
-            <div class="card-icon" style="background:${c};">${initials(f.kikishu)}</div>
-            <div class="card-main">
-              <div class="card-customer">${f.customer}</div>
-              <div class="card-title">${f.kikishu}　${f.hinmei}</div>
-              <div class="card-sub">図番: ${f.zuban || '—'}</div>
+            <div class="card-hero" style="background:${c};">
+              <span class="card-badge">検査対応</span>
+              ${QC_ICON}
             </div>
-            <div class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
+            <div class="card-body">
+              <div class="card-main">
+                <div class="card-customer">${f.customer}</div>
+                <div class="card-title">${f.kikishu}　${f.hinmei}</div>
+                <div class="card-sub">図番: ${f.zuban || '—'}</div>
+              </div>
+              <div class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
+            </div>
           `;
           listEl.appendChild(a);
         });
     }
 
     searchInput.addEventListener('input', render);
-    buildChips();
+    buildCatTiles();
     render();
 
     /* ---------- Quick stats (今週) ---------- */

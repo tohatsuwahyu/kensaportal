@@ -4,20 +4,20 @@
 <meta charset="UTF-8" />
 <title>TV表示 — 出荷検査成績書</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="theme-color" content="#0b0e14" />
+<meta name="theme-color" content="#eef2f8" />
 <link rel="icon" href="tsh.png" onerror="this.remove()">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#eef1f6; --sub:#8b93a3; --faint:#5c6472; --line:#242a35;
-    --bg:#05070c; --card:#12161f;
-    --accent:#5b8cff; --accent-2:#7ba2ff;
-    --green:#2fd88a; --green-bg:#0f2a1e;
-    --fail:#ff6b6b; --fail-bg:#2c1414;
-    --amber:#f0c04a; --amber-bg:#2b2311;
-    --purple:#a78bfa;
+    --ink:#14181f; --sub:#5b6472; --faint:#98a1af; --line:#e2e6ec;
+    --bg:#eef2f8; --card:#ffffff;
+    --accent:#1b5fd6; --accent-2:#3b82f6;
+    --green:#0f8a53; --green-bg:#e6f7ee;
+    --fail:#d33333; --fail-bg:#fdecec;
+    --amber:#b8860b; --amber-bg:#fff6e0;
+    --purple:#7c3aed;
     --mono:"JetBrains Mono",ui-monospace,monospace;
   }
   *{ box-sizing:border-box; }
@@ -25,8 +25,8 @@
   body{
     font-family:"Inter","Noto Sans JP",-apple-system,sans-serif; color:var(--ink);
     background:
-      radial-gradient(1000px 600px at 15% -10%, rgba(91,140,255,.16), transparent 60%),
-      radial-gradient(900px 500px at 105% 15%, rgba(167,139,250,.14), transparent 55%),
+      radial-gradient(1000px 600px at 15% -10%, rgba(27,95,214,.10), transparent 60%),
+      radial-gradient(900px 500px at 105% 15%, rgba(124,58,237,.08), transparent 55%),
       var(--bg);
     width:100vw; height:100vh; -webkit-font-smoothing:antialiased;
   }
@@ -51,20 +51,20 @@
 
   /* --- Slide: KPI --- */
   .kpi-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:22px; margin-bottom:30px; }
-  .kpi-card{ background:var(--card); border:1px solid var(--line); border-radius:22px; padding:28px 26px; }
+  .kpi-card{ background:var(--card); border:1px solid var(--line); border-radius:22px; padding:28px 26px; box-shadow:0 4px 16px rgba(20,30,50,.05); }
   .kpi-label{ font-size:14px; font-weight:700; color:var(--sub); text-transform:uppercase; letter-spacing:.05em; margin-bottom:14px; }
   .kpi-value{ font-family:var(--mono); font-size:56px; font-weight:700; letter-spacing:-.02em; }
   .kpi-value.pass{ color:var(--green); } .kpi-value.fail{ color:var(--fail); }
   .kpi-sub{ font-size:13px; color:var(--faint); margin-top:8px; font-family:var(--mono); }
 
-  .chart-panel{ flex:1; background:var(--card); border:1px solid var(--line); border-radius:22px; padding:28px 30px; display:flex; flex-direction:column; }
+  .chart-panel{ flex:1; background:var(--card); border:1px solid var(--line); border-radius:22px; padding:28px 30px; display:flex; flex-direction:column; box-shadow:0 4px 16px rgba(20,30,50,.05); }
   .chart-panel-title{ font-size:15px; font-weight:700; margin-bottom:16px; }
   .chart-wrap{ flex:1; }
   .chart-wrap svg{ width:100%; height:100%; }
 
   /* --- Slide: Schedule --- */
   .sched-grid{ flex:1; display:grid; grid-template-columns:1fr 1fr; gap:16px; align-content:start; overflow:hidden; }
-  .sched-item{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:20px 24px; display:flex; align-items:center; gap:16px; }
+  .sched-item{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:20px 24px; display:flex; align-items:center; gap:16px; box-shadow:0 4px 16px rgba(20,30,50,.05); }
   .sched-item.done{ opacity:.45; }
   .sched-icon{ flex:0 0 auto; width:46px; height:46px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:22px; }
   .sched-item.done .sched-icon{ background:var(--green-bg); }
@@ -78,7 +78,7 @@
 
   /* --- Slide: DX Report --- */
   .dx-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:22px; }
-  .dx-card{ background:var(--card); border:1px solid var(--line); border-radius:22px; padding:30px 26px; text-align:center; }
+  .dx-card{ background:var(--card); border:1px solid var(--line); border-radius:22px; padding:30px 26px; text-align:center; box-shadow:0 4px 16px rgba(20,30,50,.05); }
   .dx-icon{ font-size:34px; margin-bottom:14px; }
   .dx-value{ font-family:var(--mono); font-size:48px; font-weight:700; color:var(--purple); }
   .dx-label{ font-size:14px; color:var(--sub); font-weight:600; margin-top:10px; }
@@ -181,13 +181,13 @@
       const areaPath = linePath + ` L${points[points.length-1][0]},${h-padB} L${points[0][0]},${h-padB} Z`;
       const grid = [0,0.5,1].map(f => {
         const y = padT+(h-padT-padB)*f, val = Math.round(max*(1-f));
-        return `<line x1="${padL}" y1="${y}" x2="${w-padR}" y2="${y}" stroke="#1c212c" stroke-width="1"/><text x="${padL-10}" y="${y+4}" text-anchor="end" font-size="12" fill="#5c6472" font-family="JetBrains Mono">${val}</text>`;
+        return `<line x1="${padL}" y1="${y}" x2="${w-padR}" y2="${y}" stroke="#e2e6ec" stroke-width="1"/><text x="${padL-10}" y="${y+4}" text-anchor="end" font-size="12" fill="#98a1af" font-family="JetBrains Mono">${val}</text>`;
       }).join('');
-      const labels = trend.map((t,i) => `<text x="${points[i][0]}" y="${h-6}" text-anchor="middle" font-size="12" fill="#5c6472" font-family="JetBrains Mono">${t.month.slice(5)}</text>`).join('');
-      const dots = points.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="4.5" fill="#5b8cff" stroke="#0b0e14" stroke-width="2"/>`).join('');
+      const labels = trend.map((t,i) => `<text x="${points[i][0]}" y="${h-6}" text-anchor="middle" font-size="12" fill="#98a1af" font-family="JetBrains Mono">${t.month.slice(5)}</text>`).join('');
+      const dots = points.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="4.5" fill="#1b5fd6" stroke="#ffffff" stroke-width="2"/>`).join('');
       return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
-        <defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5b8cff" stop-opacity="0.3"/><stop offset="100%" stop-color="#5b8cff" stop-opacity="0"/></linearGradient></defs>
-        ${grid}<path d="${areaPath}" fill="url(#ag)"/><path d="${linePath}" fill="none" stroke="#5b8cff" stroke-width="3.5" stroke-linecap="round"/>${dots}${labels}
+        <defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1b5fd6" stop-opacity="0.22"/><stop offset="100%" stop-color="#1b5fd6" stop-opacity="0"/></linearGradient></defs>
+        ${grid}<path d="${areaPath}" fill="url(#ag)"/><path d="${linePath}" fill="none" stroke="#1b5fd6" stroke-width="3.5" stroke-linecap="round"/>${dots}${labels}
       </svg>`;
     }
 

@@ -54,6 +54,40 @@
   .add-btn:active{ transform:scale(.98); }
 
   .result-count{ font-size:11.5px; font-weight:600; color:var(--sub); margin:0 4px 10px; }
+
+  /* ---------- 客先フィルタ + 印刷 ---------- */
+  .toolbar-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .filter-chips{ display:flex; gap:7px; overflow-x:auto; padding:2px; scrollbar-width:none; flex:1; min-width:0; }
+  .filter-chips::-webkit-scrollbar{ display:none; }
+  .f-chip{ flex:0 0 auto; padding:7px 14px; border-radius:999px; border:1px solid var(--line); background:var(--card); font-size:12px; font-weight:600; color:var(--sub); cursor:pointer; white-space:nowrap; }
+  .f-chip.active{ background:linear-gradient(135deg,var(--accent),var(--accent-2)); border-color:transparent; color:#fff; }
+  .print-btn{
+    flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:9px 15px; border-radius:11px;
+    background:linear-gradient(135deg,#0f8a53,#17b56b); color:#fff; font-size:12.5px; font-weight:700;
+    border:none; cursor:pointer; box-shadow:0 4px 14px rgba(15,138,83,.3);
+  }
+  .print-btn svg{ width:15px; height:15px; }
+  .print-btn:active{ transform:scale(.96); }
+
+  /* ---------- 印刷専用ドキュメント（画面には出さず、印刷時のみ表示） ---------- */
+  #printDoc{ display:none; }
+  @media print{
+    body *{ visibility:hidden; }
+    #printDoc, #printDoc *{ visibility:visible; }
+    #printDoc{ display:block; position:absolute; top:0; left:0; width:100%; padding:14mm; }
+    .bottom-nav, .theme-toggle{ display:none !important; }
+  }
+  .pd-header{ text-align:center; margin-bottom:8mm; }
+  .pd-company{ font-size:11pt; font-weight:700; color:#333; }
+  .pd-title{ font-size:18pt; font-weight:800; margin:2mm 0; color:#111; }
+  .pd-meta{ display:flex; justify-content:center; gap:14mm; font-size:10pt; color:#444; margin-top:2mm; }
+  .pd-meta b{ color:#111; }
+  .pd-table{ width:100%; border-collapse:collapse; margin-top:6mm; }
+  .pd-table th, .pd-table td{ border:.3mm solid #999; padding:3mm 3.5mm; font-size:10pt; text-align:left; color:#111; }
+  .pd-table th{ background:#f0f0f0; font-weight:700; }
+  .pd-status{ font-weight:700; }
+  .pd-footer{ margin-top:12mm; display:flex; justify-content:space-between; font-size:9.5pt; color:#555; }
+  .pd-footer .sign{ border-top:.3mm solid #999; padding-top:2mm; width:50mm; text-align:center; }
   .list{ display:flex; flex-direction:column; gap:9px; }
   .item{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 15px; box-shadow:var(--shadow-sm); display:flex; align-items:center; gap:12px; }
   .item.done{ opacity:.55; }
@@ -110,11 +144,39 @@
       <button class="add-btn" id="addBtn">追加する</button>
     </div>
 
+    <div class="toolbar-row">
+      <div class="filter-chips" id="filterChips"></div>
+      <button class="print-btn" id="printBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>
+        出荷予定表を印刷
+      </button>
+    </div>
+
     <div id="resultCount" class="result-count"></div>
     <div id="list" class="list"></div>
     <div id="loadingState" class="loading">読み込み中…</div>
     <div id="emptyState" class="empty" style="display:none;">
       本日の予定はまだ登録されていません。<br>上のフォームから追加してください。
+    </div>
+  </div>
+
+  <!-- 印刷専用：画面には表示されず、印刷/PDF化した時だけ見える出荷予定表 -->
+  <div id="printDoc">
+    <div class="pd-header">
+      <div class="pd-company">東京精密発條株式会社</div>
+      <div class="pd-title">出荷予定表</div>
+      <div class="pd-meta">
+        <span>発行日: <b id="pdDate"></b></span>
+        <span>客先: <b id="pdCustomer"></b></span>
+      </div>
+    </div>
+    <table class="pd-table">
+      <thead><tr><th>品名</th><th>図番</th><th>メモ</th><th>検査状況</th></tr></thead>
+      <tbody id="pdTableBody"></tbody>
+    </table>
+    <div class="pd-footer">
+      <div>東京精密発條株式会社　品質保証部</div>
+      <div class="sign">承認</div>
     </div>
   </div>
 
@@ -162,6 +224,35 @@
       return await res.json();
     }
 
+    let __allItems = [];
+    let __activeCustomer = null;
+
+    function buildFilterChips(){
+      const chipsEl = document.getElementById('filterChips');
+      const customers = [...new Set(__allItems.map(it => it.customer).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja'));
+      if (customers.length === 0){ chipsEl.innerHTML = ''; return; }
+      chipsEl.innerHTML = '';
+      const allChip = document.createElement('div');
+      allChip.className = 'f-chip' + (__activeCustomer===null ? ' active' : '');
+      allChip.textContent = `すべて (${__allItems.length})`;
+      allChip.onclick = () => { __activeCustomer = null; renderFiltered(); };
+      chipsEl.appendChild(allChip);
+      customers.forEach(c => {
+        const n = __allItems.filter(it => it.customer === c).length;
+        const chip = document.createElement('div');
+        chip.className = 'f-chip' + (__activeCustomer===c ? ' active' : '');
+        chip.textContent = `${c} (${n})`;
+        chip.onclick = () => { __activeCustomer = c; renderFiltered(); };
+        chipsEl.appendChild(chip);
+      });
+    }
+
+    function renderFiltered(){
+      buildFilterChips();
+      const filtered = __activeCustomer ? __allItems.filter(it => it.customer === __activeCustomer) : __allItems;
+      render(filtered);
+    }
+
     function render(items){
       countEl.textContent = `本日 ${items.length} 件の予定`;
       if (items.length === 0){ listEl.innerHTML=''; emptyEl.style.display='block'; return; }
@@ -187,8 +278,8 @@
     async function load(){
       try{
         const res = await apiGAS({ action:'getScheduleToday' });
-        const items = (res && res.ok && Array.isArray(res.items)) ? res.items : [];
-        render(items);
+        __allItems = (res && res.ok && Array.isArray(res.items)) ? res.items : [];
+        renderFiltered();
       }catch(e){
         listEl.innerHTML = '';
         emptyEl.style.display = 'block';
@@ -197,6 +288,28 @@
         loadingEl.style.display = 'none';
       }
     }
+
+    /* ---------- 出荷予定表の印刷（現在の絞り込みに合わせて印刷） ---------- */
+    function statusLabel(it){
+      if (it.completed) return '検査完了 ✓';
+      if (it.inspectedToday > 0) return `検査中（${it.inspectedToday}件）`;
+      return '未着手';
+    }
+    document.getElementById('printBtn').addEventListener('click', () => {
+      const filtered = __activeCustomer ? __allItems.filter(it => it.customer === __activeCustomer) : __allItems;
+      if (filtered.length === 0){ alert('印刷する予定がありません。'); return; }
+      document.getElementById('pdDate').textContent = new Date().toLocaleDateString('ja-JP', { year:'numeric', month:'long', day:'numeric' });
+      document.getElementById('pdCustomer').textContent = __activeCustomer || 'すべて（社内確認用）';
+      document.getElementById('pdTableBody').innerHTML = filtered.map(it => `
+        <tr>
+          <td>${it.hinmei || '—'}</td>
+          <td>${it.zuban || '—'}</td>
+          <td>${it.note || ''}</td>
+          <td class="pd-status">${statusLabel(it)}</td>
+        </tr>
+      `).join('');
+      window.print();
+    });
 
     document.getElementById('addBtn').addEventListener('click', async () => {
       const customer = document.getElementById('inCustomer').value.trim();

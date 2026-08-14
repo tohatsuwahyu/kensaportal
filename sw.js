@@ -1,6 +1,6 @@
-// tsh-kensa-v1 — naikkan versi ini (v1 -> v2 -> ...) setiap kali file HTML/CSS utama diubah,
+// tsh-kensa-v2 — naikkan versi ini (v1 -> v2 -> ...) setiap kali file HTML/CSS utama diubah,
 // supaya tablet lama tidak nyangkut memakai cache versi lama.
-const CACHE_NAME = 'tsh-kensa-v1';
+const CACHE_NAME = 'tsh-kensa-v2';
 const SHELL_FILES = [
   './index.html', './dashboard.html', './riwayat.html', './schedule.html',
   './audit-log.html', './dx-report.html', './signage.html', './tsh.png', './manifest.json'
@@ -33,7 +33,14 @@ self.addEventListener('fetch', (e) => {
           caches.open(CACHE_NAME).then((c) => c.put(e.request, resClone));
         }
         return res;
-      }).catch(() => cached);
+      }).catch(() => {
+        // PENTING: harus selalu mengembalikan Response yang valid, tidak boleh undefined.
+        if (cached) return cached;
+        return new Response(
+          'オフラインです。ネットワーク接続をご確認ください。',
+          { status: 503, statusText: 'Offline', headers: { 'Content-Type': 'text/plain; charset=utf-8' } }
+        );
+      });
       return cached || fetchPromise;
     })
   );

@@ -174,6 +174,11 @@
   .heatmap-legend .sq{ width:10px; height:10px; border-radius:3px; }
   .heatmap-tooltip{ font-size:10.5px; color:var(--sub); text-align:center; margin-top:8px; min-height:14px; }
 
+  /* ---------- Export CSV button ---------- */
+  .export-btn{ display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:10px; border:1px solid var(--line); background:var(--card); color:var(--ink-soft); font-size:12px; font-weight:700; cursor:pointer; box-shadow:var(--shadow-sm); }
+  .export-btn svg{ width:14px; height:14px; }
+  .export-btn:active{ transform:scale(.97); }
+
   .footer{ text-align:center; margin-top:30px; font-size:11px; color:var(--faint); font-weight:500; letter-spacing:.02em; }
 
   .bottom-nav{
@@ -208,6 +213,13 @@
   #kensaAuthCard button:disabled{opacity:.6;}
   #kensaAuthCard .err{color:#b3261e;font-size:12px;margin-top:10px;min-height:14px;}
   #kensaAuthCard .foot{margin-top:16px;font-size:10.5px;color:#a5abb6;}
+
+  #kensaUserBadge{display:none;position:fixed;top:8px;right:8px;z-index:9998;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border:1px solid #e7e9ee;border-radius:999px;padding:5px 8px 5px 5px;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#161b22;box-shadow:0 4px 14px rgba(0,0,0,.1);font-family:"Inter",sans-serif;}
+  #kensaUserBadge .av{width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#1b5fd6,#3b82f6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;flex:0 0 auto;}
+  #kensaUserBadge .role{font-size:9px;color:#68707c;font-weight:600;background:#f0f1f4;border-radius:999px;padding:2px 6px;}
+  #kensaUserBadge button{border:none;background:none;cursor:pointer;color:#a5abb6;font-size:13px;padding:0 2px;}
+  #kensaOfflineBadge{display:none;position:fixed;bottom:calc(66px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:9998;background:#161b22;color:#fff;border-radius:999px;padding:7px 14px;font-size:11px;font-weight:700;box-shadow:0 8px 20px rgba(0,0,0,.25);font-family:"Inter",sans-serif;align-items:center;gap:6px;white-space:nowrap;}
+  @media print{ #kensaAuthOverlay, #kensaUserBadge, #kensaOfflineBadge{ display:none !important; } }
 </style>
 <div id="kensaAuthOverlay">
   <div id="kensaAuthCard">
@@ -220,13 +232,26 @@
     <div class="foot">&#26481;&#20140;&#31934;&#23494;&#30330;&#26465;&#26666;&#24335;&#20250;&#31038;</div>
   </div>
 </div>
+<div id="kensaUserBadge">
+  <span class="av" id="kensaUserAvatar">?</span>
+  <span id="kensaUserName">-</span>
+  <span class="role" id="kensaUserRole"></span>
+  <button id="kensaLogoutBtn" title="&#12525;&#12464;&#12450;&#12454;&#12488;">&#10005;</button>
+</div>
+<div id="kensaOfflineBadge"></div>
 <script>
 (function(){
   var AUTH_KEY = 'kensa:session';
+  var QUEUE_KEY = 'kensa:offlineQueue';
+  var QUEUEABLE_ACTIONS = ['logSave','addScheduleItem','markScheduleDone','deleteScheduleItem','saveShipment'];
+
   function getSession(){ try{ return JSON.parse(localStorage.getItem(AUTH_KEY)||'null'); }catch(e){ return null; } }
   function setSession(s){ localStorage.setItem(AUTH_KEY, JSON.stringify(s)); }
   function clearSession(){ localStorage.removeItem(AUTH_KEY); }
   window.__kensaAuth = { getSession: getSession, setSession: setSession, clearSession: clearSession };
+
+  function getQueue(){ try{ return JSON.parse(localStorage.getItem(QUEUE_KEY)||'[]'); }catch(e){ return []; } }
+  function setQueue(q){ localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); }
 
   function findGasUrl(){
     if (window.GAS_URL) return window.GAS_URL;
@@ -255,17 +280,75 @@
         }).catch(function(){});
       }
       return res;
+    }).catch(function(err){
+      // Network gagal (offline) — untuk aksi ringan tertentu, antrekan supaya tidak hilang.
+      if (typeof url === 'string' && url.indexOf('script.google.com/macros') !== -1 && opts && opts.method === 'POST' && opts.body){
+        try{
+          var b = JSON.parse(opts.body);
+          if (QUEUEABLE_ACTIONS.indexOf(b.action) !== -1 && opts.body.length < 200000){
+            var q = getQueue();
+            q.push({ url: url, body: opts.body, ts: Date.now() });
+            setQueue(q);
+            updateOfflineBadge();
+            return new Response(JSON.stringify({ ok:true, queued:true }), { status:200, headers:{'Content-Type':'application/json'} });
+          }
+        }catch(e){}
+      }
+      throw err;
     });
   };
+
+  function updateOfflineBadge(){
+    var el = document.getElementById('kensaOfflineBadge');
+    if (!el) return;
+    var q = getQueue();
+    if (q.length > 0){
+      el.style.display = 'flex';
+      el.textContent = (navigator.onLine ? '\u9001\u4fe1\u4e2d\u2026 ' : '\ud83d\udd0c \u30aa\u30d5\u30e9\u30a4\u30f3\u4fdd\u5b58\u4e2d ') + q.length + '\u4ef6';
+    } else {
+      el.style.display = 'none';
+    }
+  }
+
+  function flushQueue(){
+    var q = getQueue();
+    if (q.length === 0) return;
+    (function next(){
+      var cur = getQueue();
+      if (cur.length === 0){ updateOfflineBadge(); return; }
+      var item = cur[0];
+      _fetch(item.url, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: item.body })
+        .then(function(res){ return res.json().catch(function(){ return {ok:true}; }); })
+        .then(function(j){
+          var q2 = getQueue();
+          q2.shift(); setQueue(q2); updateOfflineBadge();
+          if (getQueue().length > 0) next();
+        })
+        .catch(function(){ updateOfflineBadge(); /* masih offline, coba lagi nanti */ });
+    })();
+  }
+  window.addEventListener('online', flushQueue);
+  setInterval(flushQueue, 20000);
 
   function showGate(){
     var el = document.getElementById('kensaAuthOverlay');
     if (el) el.style.display = 'flex';
+    var badge = document.getElementById('kensaUserBadge'); if (badge) badge.style.display = 'none';
     setTimeout(function(){ var i = document.getElementById('kensaAuthPin'); if(i) i.focus(); }, 50);
   }
   function hideGate(){
     var el = document.getElementById('kensaAuthOverlay');
     if (el) el.style.display = 'none';
+  }
+  function showUserBadge(s){
+    var badge = document.getElementById('kensaUserBadge');
+    if (!badge || !s) return;
+    document.getElementById('kensaUserName').textContent = s.userName || '\u4e0d\u660e';
+    document.getElementById('kensaUserRole').textContent = s.role === 'admin' ? '\u7ba1\u7406\u8005' : '\u30aa\u30da\u30ec\u30fc\u30bf\u30fc';
+    document.getElementById('kensaUserAvatar').textContent = (s.userName || '?').slice(0,1);
+    badge.style.display = 'flex';
+    document.querySelectorAll('.admin-only').forEach(function(el){ el.style.display = (s.role === 'admin') ? '' : 'none'; });
+    document.body.setAttribute('data-role', s.role || 'operator');
   }
 
   function doLogin(){
@@ -281,7 +364,8 @@
       .then(function(res){ return res.json(); })
       .then(function(data){
         if (data && data.ok){
-          setSession({ token: data.token, expiresAt: Date.now() + (data.expiresInHours||12) * 3600 * 1000 });
+          var s = { token: data.token, expiresAt: Date.now() + (data.expiresInHours||12) * 3600 * 1000, userName: data.userName, role: data.role };
+          setSession(s);
           hideGate();
           location.reload();
         } else {
@@ -300,11 +384,19 @@
     var pinInput = document.getElementById('kensaAuthPin');
     if (btn) btn.addEventListener('click', doLogin);
     if (pinInput) pinInput.addEventListener('keydown', function(ev){ if (ev.key === 'Enter') doLogin(); });
+    var logoutBtn = document.getElementById('kensaLogoutBtn');
+    if (logoutBtn) logoutBtn.addEventListener('click', function(){
+      if (confirm('\u30ed\u30b0\u30a2\u30a6\u30c8\u3057\u307e\u3059\u304b\uff1f')){ clearSession(); location.reload(); }
+    });
 
     var s = getSession();
     if (!s || !s.token || !s.expiresAt || s.expiresAt < Date.now()){
       clearSession();
       showGate();
+    } else {
+      showUserBadge(s);
+      updateOfflineBadge();
+      flushQueue();
     }
   });
 
@@ -448,7 +540,7 @@
     }
     function last14(arr){ return arr.slice(Math.max(0, arr.length - 14)); }
 
-    /* ---------- ヒートマップ（直近35日、7列×5行） ---------- */
+    /* ---------- ヒートマップ（直近35日） ---------- */
     function heatmapSVGGrid(trend){
       if (!trend || trend.length === 0) return `<div class="empty-note">データがありません</div>`;
       const maxTotal = Math.max(1, ...trend.map(d => d.total));
@@ -471,13 +563,12 @@
         </div>`;
     }
 
-    /* ---------- ハイライト（連続 否=0 日数のストリーク、または直近の最多検査日） ---------- */
+    /* ---------- ハイライト ---------- */
     function computeHighlight(trend){
       const active = trend.filter(d => d.total > 0);
       if (active.length === 0){
         return { icon:'👋', eyebrow:'Welcome', title:'まだ今期のデータがありません', sub:'検査を記録するとここに実績が表示されます' };
       }
-      // 直近から遡って「否=0」が連続している日数（未稼働日はスキップ）
       let streak = 0;
       for (let i = trend.length - 1; i >= 0; i--){
         const d = trend[i];
@@ -490,6 +581,20 @@
       const busiest = active.reduce((a,b) => b.total > a.total ? b : a);
       const dt = new Date(busiest.date + 'T00:00:00');
       return { icon:'📈', eyebrow:'Recent Peak', title:`${dt.getMonth()+1}/${dt.getDate()} は${busiest.total}件を検査`, sub:'直近35日間で最も検査数が多かった日' };
+    }
+
+    /* ---------- CSV エクスポート（管理者のみ） ---------- */
+    async function exportCsv(sinceDays){
+      try{
+        const res = await apiGAS({ action:'exportCsv', sheet:'Logs', sinceDays: sinceDays || 0 });
+        if (!res || !res.ok) throw new Error(res?.message || 'エクスポートに失敗しました');
+        const blob = new Blob(['\\uFEFF' + res.csv], { type:'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = res.filename || 'logs.csv';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }catch(e){ alert('CSVエクスポートに失敗しました: ' + (e.message || e)); }
     }
 
     function trendBadge(current, prev){
@@ -527,9 +632,9 @@
       const rate = judged > 0 ? Math.round((pass / judged) * 100) : 0;
       const prevTotal = stats.prevTotal || 0;
       const prevPass = stats.prevPass || 0;
-
       const hl = computeHighlight(__dailyTrend);
       const spark14 = last14(__dailyTrend);
+      const sinceDaysCur = Number(stats.sinceDays) || 30;
 
       document.getElementById('content').innerHTML = `
         <div class="hero-highlight">
@@ -595,6 +700,13 @@
           <div class="panel-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/></svg>入力者別 件数</div>
           ${renderList(stats.byInputter)}
         </div>
+
+        <div class="admin-only" style="text-align:right; margin-top:14px;">
+          <button class="export-btn" onclick="exportCsv(${sinceDaysCur})">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 19h16"/></svg>
+            CSVエクスポート（${sinceDaysCur}日分）
+          </button>
+        </div>
       `;
 
       countUp(document.getElementById('mvTotal'), total);
@@ -613,6 +725,8 @@
           cell.addEventListener('mouseleave', () => { tip.textContent = 'セルにカーソルを合わせると詳細が出ます'; });
         });
       }
+      const s = window.__kensaAuth?.getSession?.();
+      document.querySelectorAll('.admin-only').forEach(el => { el.style.display = (s && s.role === 'admin') ? '' : 'none'; });
     }
 
     async function load(days){

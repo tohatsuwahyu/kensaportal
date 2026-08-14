@@ -55,6 +55,28 @@
 
   .result-count{ font-size:12px; font-weight:600; color:var(--sub); margin:6px 4px 10px; }
 
+  /* ---------- Filter cepat (客先 / 機種) ---------- */
+  .chip-row{ display:flex; gap:7px; overflow-x:auto; padding:2px 2px 8px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  .chip-row::-webkit-scrollbar{ display:none; }
+  .chip-row-label{ font-size:10.5px; font-weight:700; color:var(--faint); margin:0 4px 5px; text-transform:uppercase; letter-spacing:.04em; }
+  .chip{
+    flex:0 0 auto; padding:7px 13px; border-radius:999px; border:1px solid var(--line); background:var(--card);
+    font-size:12px; font-weight:600; color:var(--sub); cursor:pointer; white-space:nowrap; user-select:none;
+    box-shadow:var(--shadow-sm); transition:all .15s ease;
+  }
+  .chip .n{ opacity:.6; font-size:10.5px; margin-left:2px; }
+  .chip.active{ background:linear-gradient(135deg,var(--accent),var(--accent-2)); border-color:transparent; color:#fff; box-shadow:0 4px 12px rgba(27,95,214,.25); }
+
+  /* ---------- Tombol reprint ---------- */
+  .card-footer{ display:flex; justify-content:flex-end; margin-top:9px; }
+  .reprint-btn{
+    display:inline-flex; align-items:center; gap:6px; padding:7px 13px; border-radius:10px;
+    background:var(--accent-soft, #eaf1ff); color:var(--accent); font-size:11.5px; font-weight:700;
+    text-decoration:none; border:1px solid transparent;
+  }
+  .reprint-btn svg{ width:13px; height:13px; }
+  .reprint-btn:active{ transform:scale(.96); }
+
   .list{ display:flex; flex-direction:column; gap:9px; }
   .card{
     display:block; background:var(--card); border-radius:14px; padding:13px 15px;
@@ -112,7 +134,9 @@
   #kensaUserBadge{display:none;position:fixed;top:8px;right:8px;z-index:9998;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border:1px solid #e7e9ee;border-radius:999px;padding:5px 8px 5px 5px;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#161b22;box-shadow:0 4px 14px rgba(0,0,0,.1);font-family:"Inter",sans-serif;}
   #kensaUserBadge .av{width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#1b5fd6,#3b82f6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;flex:0 0 auto;}
   #kensaUserBadge .role{font-size:9px;color:#68707c;font-weight:600;background:#f0f1f4;border-radius:999px;padding:2px 6px;}
-  #kensaUserBadge button{border:none;background:none;cursor:pointer;color:#a5abb6;font-size:13px;padding:0 2px;}
+  #kensaUserBadge button{border:1px solid #f0d0d0;background:#fff5f5;cursor:pointer;color:#c0392b;font-size:10.5px;font-weight:700;padding:5px 9px;border-radius:999px;display:flex;align-items:center;gap:4px;white-space:nowrap;}
+  #kensaUserBadge button:active{transform:scale(.95);}
+  #kensaUserBadge button:hover{background:#ffe9e9;}
   #kensaOfflineBadge{display:none;position:fixed;bottom:calc(66px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:9998;background:#161b22;color:#fff;border-radius:999px;padding:7px 14px;font-size:11px;font-weight:700;box-shadow:0 8px 20px rgba(0,0,0,.25);font-family:"Inter",sans-serif;align-items:center;gap:6px;white-space:nowrap;}
   @media print{ #kensaAuthOverlay, #kensaUserBadge, #kensaOfflineBadge{ display:none !important; } }
 </style>
@@ -131,7 +155,10 @@
   <span class="av" id="kensaUserAvatar">?</span>
   <span id="kensaUserName">-</span>
   <span class="role" id="kensaUserRole"></span>
-  <button id="kensaLogoutBtn" title="&#12525;&#12464;&#12450;&#12454;&#12488;">&#10005;</button>
+  <button id="kensaLogoutBtn" title="&#12525;&#12464;&#12450;&#12454;&#12488;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+    <span>&#12525;&#12464;&#12450;&#12454;&#12488;</span>
+  </button>
 </div>
 <div id="kensaOfflineBadge"></div>
 <script>
@@ -320,6 +347,9 @@
       <input id="searchInput" type="text" placeholder="客先・品名・製造No・図番・入力者で検索…" autocomplete="off" />
     </div>
 
+    <div id="customerChips" class="chip-row"></div>
+    <div id="kikishuChips" class="chip-row"></div>
+
     <div id="resultCount" class="result-count"></div>
     <div id="list" class="list"></div>
     <div id="loadingState" class="loading">読み込み中…</div>
@@ -379,6 +409,8 @@
 
     let __allRows = [];
     let __debounceTimer = null;
+    let __activeCustomer = null;
+    let __activeKikishu = null;
 
     async function apiGAS(body){
       if (GAS_URL.includes('GANTI_DENGAN')) throw new Error('GAS_URL belum diatur di riwayat.html');
@@ -398,27 +430,66 @@
       return `<span class="badge unknown">未判定</span>`;
     }
 
+    /* ---------- チップ（客先／機種）を今読み込んでいるデータから動的生成 ---------- */
+    function buildChipCounts(rows, field){
+      const counts = {};
+      rows.forEach(r => { const v = (r[field]||'').trim(); if (v) counts[v] = (counts[v]||0)+1; });
+      return Object.keys(counts).sort((a,b) => counts[b]-counts[a]).map(name => ({ name, count: counts[name] }));
+    }
+    function renderChipRow(containerEl, items, activeValue, onClick, allLabel){
+      if (items.length === 0){ containerEl.innerHTML = ''; return; }
+      const allChip = `<div class="chip ${activeValue===null?'active':''}" data-all="1">${allLabel}</div>`;
+      const chips = items.slice(0, 12).map(it => `
+        <div class="chip ${activeValue===it.name?'active':''}" data-name="${it.name}">${it.name}<span class="n">${it.count}</span></div>
+      `).join('');
+      containerEl.innerHTML = allChip + chips;
+      containerEl.querySelectorAll('.chip').forEach(el => {
+        el.addEventListener('click', () => onClick(el.dataset.all ? null : el.dataset.name));
+      });
+    }
+    function buildChips(){
+      renderChipRow(
+        document.getElementById('customerChips'),
+        buildChipCounts(__allRows, 'customer'),
+        __activeCustomer,
+        (v) => { __activeCustomer = v; buildChips(); applyFilter(); },
+        'すべての客先'
+      );
+      renderChipRow(
+        document.getElementById('kikishuChips'),
+        buildChipCounts(__allRows, 'kikishu'),
+        __activeKikishu,
+        (v) => { __activeKikishu = v; buildChips(); applyFilter(); },
+        'すべての機種'
+      );
+    }
+
     function render(rows){
       listEl.innerHTML = '';
       countEl.textContent = `${rows.length} 件`;
       if (rows.length === 0){ emptyEl.style.display = 'block'; return; }
       emptyEl.style.display = 'none';
       rows.forEach(row => {
-        const el = document.createElement(row.file_url ? 'a' : 'div');
+        const el = document.createElement('div');
         el.className = 'card';
-        if (row.file_url) { el.href = row.file_url; el.target = '_blank'; el.rel = 'noopener'; }
         const c = colorFor(row.customer);
         el.innerHTML = `
           <div class="card-row1">
             <div class="card-icon" style="background:${c};">${initials(row.hinmei || row.customer)}</div>
             <div class="card-main">
-              <div class="card-customer">${row.customer || '—'}</div>
+              <div class="card-customer">${row.customer || '—'}${row.kikishu ? ' ・ ' + row.kikishu : ''}</div>
               <div class="card-title">${row.hinmei || '—'} ／ ${row.serial_full || '—'}</div>
+              ${row.hinban ? `<div class="card-sub">品番: ${row.hinban}</div>` : ''}
+              <div class="card-sub">図番: ${row.zuban || '—'} ・ 製造日: ${row.making_date || '—'}</div>
               <div class="card-sub">${fmtDate(row.timestamp)} ・ 入力: ${row.inputter || '—'}</div>
             </div>
             ${judgeBadge(row.judgment)}
           </div>
-          ${row.file_url ? '' : '<div class="no-link">PDFリンクなし</div>'}
+          <div class="card-footer">
+            ${row.file_url
+              ? `<a class="reprint-btn" href="${row.file_url}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>再印刷</a>`
+              : `<span class="no-link">PDFリンクなし</span>`}
+          </div>
         `;
         listEl.appendChild(el);
       });
@@ -426,10 +497,15 @@
 
     function applyFilter(){
       const q = searchInput.value.trim().toLowerCase();
-      if (!q) { render(__allRows); return; }
-      render(__allRows.filter(r =>
-        `${r.customer} ${r.hinmei} ${r.serial_full} ${r.inputter}`.toLowerCase().includes(q)
-      ));
+      let rows = __allRows;
+      if (__activeCustomer) rows = rows.filter(r => r.customer === __activeCustomer);
+      if (__activeKikishu) rows = rows.filter(r => r.kikishu === __activeKikishu);
+      if (q){
+        rows = rows.filter(r =>
+          `${r.customer} ${r.hinmei} ${r.serial_full} ${r.inputter} ${r.kikishu||''} ${r.zuban||''} ${r.hinban||''}`.toLowerCase().includes(q)
+        );
+      }
+      render(rows);
     }
 
     async function loadFromServer(query){
@@ -438,7 +514,8 @@
       try{
         const res = await apiGAS({ action:'searchLogs', query: query || '', limit: 100 });
         __allRows = (res && res.ok && Array.isArray(res.rows)) ? res.rows : [];
-        render(__allRows);
+        buildChips();
+        applyFilter();
       }catch(e){
         listEl.innerHTML = '';
         countEl.textContent = '';

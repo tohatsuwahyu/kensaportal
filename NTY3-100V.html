@@ -176,7 +176,9 @@
   #kensaUserBadge{display:none;position:fixed;top:8px;right:8px;z-index:9998;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border:1px solid #e7e9ee;border-radius:999px;padding:5px 8px 5px 5px;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#161b22;box-shadow:0 4px 14px rgba(0,0,0,.1);font-family:"Inter",sans-serif;}
   #kensaUserBadge .av{width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#1b5fd6,#3b82f6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;flex:0 0 auto;}
   #kensaUserBadge .role{font-size:9px;color:#68707c;font-weight:600;background:#f0f1f4;border-radius:999px;padding:2px 6px;}
-  #kensaUserBadge button{border:none;background:none;cursor:pointer;color:#a5abb6;font-size:13px;padding:0 2px;}
+  #kensaUserBadge button{border:1px solid #f0d0d0;background:#fff5f5;cursor:pointer;color:#c0392b;font-size:10.5px;font-weight:700;padding:5px 9px;border-radius:999px;display:flex;align-items:center;gap:4px;white-space:nowrap;}
+  #kensaUserBadge button:active{transform:scale(.95);}
+  #kensaUserBadge button:hover{background:#ffe9e9;}
   #kensaOfflineBadge{display:none;position:fixed;bottom:calc(66px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:9998;background:#161b22;color:#fff;border-radius:999px;padding:7px 14px;font-size:11px;font-weight:700;box-shadow:0 8px 20px rgba(0,0,0,.25);font-family:"Inter",sans-serif;align-items:center;gap:6px;white-space:nowrap;}
   @media print{ #kensaAuthOverlay, #kensaUserBadge, #kensaOfflineBadge{ display:none !important; } }
 </style>
@@ -195,7 +197,10 @@
   <span class="av" id="kensaUserAvatar">?</span>
   <span id="kensaUserName">-</span>
   <span class="role" id="kensaUserRole"></span>
-  <button id="kensaLogoutBtn" title="&#12525;&#12464;&#12450;&#12454;&#12488;">&#10005;</button>
+  <button id="kensaLogoutBtn" title="&#12525;&#12464;&#12450;&#12454;&#12488;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+    <span>&#12525;&#12464;&#12450;&#12454;&#12488;</span>
+  </button>
 </div>
 <div id="kensaOfflineBadge"></div>
 <script>
@@ -413,7 +418,7 @@
         </tr>
         <tr>
           <td class="section-label">機種</td><td class="align-left" id="fieldKikishu">NTY3-100V</td>
-          <td class="section-label">品番</td><td class="align-left">J21*4016013BB</td>
+          <td class="section-label">品番</td><td class="align-left" id="fieldHinban">J21*4016013BB</td>
           <td class="section-label">図番</td>
           <td class="align-left"><input type="text" name="zuban" value="3555-7" class="soft-required" data-soft-required="1" /></td>
         </tr>
@@ -637,7 +642,10 @@
           photos.push({ fileName: photoName, base64: await blobToBase64(__photos[i].blob) });
         }
 
-        const res = await apiGAS({ action:'uploadInspectionBatch', app_ns:APP_NS, customer, hinmei, fileName, pdfBase64, photos, units });
+        const kikishuVal = (document.getElementById('fieldKikishu')?.textContent || '').trim();
+        const hinbanVal = (document.getElementById('fieldHinban')?.textContent || '').trim();
+        const makingDateVal = (document.querySelector('input[name="makingdate"]')?.value || '').trim();
+        const res = await apiGAS({ action:'uploadInspectionBatch', app_ns:APP_NS, customer, hinmei, kikishu: kikishuVal, making_date: makingDateVal, hinban: hinbanVal, fileName, pdfBase64, photos, units });
         if (res?.ok){
           const last = units[units.length-1];
           showSaveSuccessModal(`${units[0].serial_full} 〜 ${last.serial_full}（${qty}件）`, last.judgment, res.savedPhotos ?? photos.length);
@@ -1014,6 +1022,9 @@
       const serialSuffix = (q('input[name="serial_no_suffix"]')?.value || '').trim();
       const serialFull   = getSerialFull();
       const zuban    = (q('input[name="zuban"]')?.value || '').trim();
+    const kikishu = (document.getElementById('fieldKikishu')?.textContent || '').trim();
+    const hinban = (document.getElementById('fieldHinban')?.textContent || '').trim();
+    const makingDate = (q('input[name="makingdate"]')?.value || '').trim();
       const customer = (document.querySelector('.header-table tr:nth-child(1) td:nth-child(2)')?.textContent || '').trim();
       const hinmei   = (document.getElementById('fieldHinmei')?.textContent || '').trim();
       const orderNo  = ''; // form ini tidak punya order_no
@@ -1034,6 +1045,8 @@
             serial_suffix: serialSuffix,
             serial_full: serialFull,
             zuban, customer, hinmei, order_no: orderNo, inputter,
+          kikishu, making_date: makingDate,
+          hinban,
             file_name: fileName, file_url: extra.fileUrl || '', verify_id: extra.verifyId || '', client_id: clientId, notes
           })
         });

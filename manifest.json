@@ -1,0 +1,12 @@
+{
+  "name": "出荷検査成績書ポータル",
+  "short_name": "検査ポータル",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0b0e14",
+  "theme_color": "#1b5fd6",
+  "icons": [
+    { "src": "tsh.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "tsh.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

@@ -96,6 +96,27 @@
   .progress-dots{ display:flex; gap:8px; justify-content:center; margin-top:20px; }
   .pdot{ width:8px; height:8px; border-radius:50%; background:var(--line); transition:all .3s ease; }
   .pdot.active{ background:var(--accent); width:26px; border-radius:5px; }
+
+  /* --- Slide: 本日のサマリー --- */
+  .today-hero{
+    display:flex; align-items:center; gap:26px; background:linear-gradient(120deg,#1b5fd6,#3b82f6,#6a8dfa);
+    border-radius:26px; padding:34px 40px; color:#fff; margin-bottom:24px; box-shadow:0 16px 40px -12px rgba(27,95,214,.5);
+  }
+  .today-hero-icon{ font-size:56px; }
+  .today-hero-num{ font-family:var(--mono); font-size:64px; font-weight:800; line-height:1; }
+  .today-hero-label{ font-size:15px; font-weight:700; opacity:.9; margin-top:6px; }
+  .today-grid{ flex:1; display:grid; grid-template-columns:repeat(4,1fr); gap:20px; }
+  .today-card{ background:var(--card); border:1px solid var(--line); border-radius:20px; padding:26px 22px; box-shadow:0 4px 16px rgba(20,30,50,.05); }
+  .today-card-label{ font-size:13px; font-weight:700; color:var(--sub); text-transform:uppercase; letter-spacing:.04em; margin-bottom:10px; }
+  .today-card-value{ font-family:var(--mono); font-size:38px; font-weight:700; }
+  .today-card-value.pass{ color:var(--green); } .today-card-value.fail{ color:var(--fail); }
+  .today-card-sub{ font-size:13px; color:var(--faint); margin-top:6px; }
+  .today-mvp{ flex:1; display:flex; flex-direction:column; gap:16px; }
+  .mvp-card{ flex:1; background:var(--card); border:1px solid var(--line); border-radius:22px; padding:26px 28px; display:flex; align-items:center; gap:20px; box-shadow:0 4px 16px rgba(20,30,50,.05); }
+  .mvp-icon{ font-size:38px; }
+  .mvp-name{ font-size:24px; font-weight:800; }
+  .mvp-label{ font-size:13px; color:var(--sub); font-weight:600; }
+  .mvp-count{ margin-left:auto; font-family:var(--mono); font-size:30px; font-weight:700; color:var(--accent); }
 </style>
 </head>
 <body>
@@ -115,7 +136,9 @@
   #kensaUserBadge{display:none;position:fixed;top:8px;right:8px;z-index:9998;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border:1px solid #e7e9ee;border-radius:999px;padding:5px 8px 5px 5px;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#161b22;box-shadow:0 4px 14px rgba(0,0,0,.1);font-family:"Inter",sans-serif;}
   #kensaUserBadge .av{width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#1b5fd6,#3b82f6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;flex:0 0 auto;}
   #kensaUserBadge .role{font-size:9px;color:#68707c;font-weight:600;background:#f0f1f4;border-radius:999px;padding:2px 6px;}
-  #kensaUserBadge button{border:none;background:none;cursor:pointer;color:#a5abb6;font-size:13px;padding:0 2px;}
+  #kensaUserBadge button{border:1px solid #f0d0d0;background:#fff5f5;cursor:pointer;color:#c0392b;font-size:10.5px;font-weight:700;padding:5px 9px;border-radius:999px;display:flex;align-items:center;gap:4px;white-space:nowrap;}
+  #kensaUserBadge button:active{transform:scale(.95);}
+  #kensaUserBadge button:hover{background:#ffe9e9;}
   #kensaOfflineBadge{display:none;position:fixed;bottom:calc(66px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:9998;background:#161b22;color:#fff;border-radius:999px;padding:7px 14px;font-size:11px;font-weight:700;box-shadow:0 8px 20px rgba(0,0,0,.25);font-family:"Inter",sans-serif;align-items:center;gap:6px;white-space:nowrap;}
   @media print{ #kensaAuthOverlay, #kensaUserBadge, #kensaOfflineBadge{ display:none !important; } }
 </style>
@@ -134,7 +157,10 @@
   <span class="av" id="kensaUserAvatar">?</span>
   <span id="kensaUserName">-</span>
   <span class="role" id="kensaUserRole"></span>
-  <button id="kensaLogoutBtn" title="&#12525;&#12464;&#12450;&#12454;&#12488;">&#10005;</button>
+  <button id="kensaLogoutBtn" title="&#12525;&#12464;&#12450;&#12454;&#12488;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+    <span>&#12525;&#12464;&#12450;&#12454;&#12488;</span>
+  </button>
 </div>
 <div id="kensaOfflineBadge"></div>
 <script>
@@ -327,7 +353,22 @@
     </div>
 
     <div class="slides" id="slides">
-      <div class="slide active" id="slideKpi">
+      <div class="slide active" id="slideToday">
+        <div class="slide-title"><span class="live-dot"></span>本日のサマリー</div>
+        <div class="today-hero" id="todayHero">
+          <div class="today-hero-icon">📋</div>
+          <div>
+            <div class="today-hero-num" id="todayTotalNum">–</div>
+            <div class="today-hero-label">本日の検査件数</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:20px; flex:1;">
+          <div class="today-grid" id="todayGrid" style="grid-template-columns:repeat(2,1fr); flex:1.3;"></div>
+          <div class="today-mvp" id="todayMvp"></div>
+        </div>
+      </div>
+
+      <div class="slide" id="slideKpi">
         <div class="slide-title"><span class="live-dot"></span>品質サマリー（過去30日）</div>
         <div class="kpi-grid" id="kpiGrid"></div>
         <div class="chart-panel">
@@ -369,7 +410,7 @@
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.location.href = 'index.html'; });
 
     /* ---------- スライド切り替え ---------- */
-    const slideIds = ['slideKpi','slideSchedule','slideDx'];
+    const slideIds = ['slideToday','slideKpi','slideSchedule','slideDx'];
     let currentSlide = 0;
     function showSlide(i){
       slideIds.forEach((id, idx) => document.getElementById(id).classList.toggle('active', idx === i));
@@ -465,7 +506,37 @@
       }catch(e){}
     }
 
-    function loadAll(){ loadKpi(); loadSchedule(); loadDx(); }
+    async function loadTodaySummary(){
+      try{
+        const res = await apiGAS({ action:'getTodaySummary' });
+        if (!res || !res.ok) return;
+        const total = res.total||0, pass = res.pass||0, fail = res.fail||0;
+        const judged = pass+fail, rate = judged>0 ? Math.round(pass/judged*100) : 0;
+        document.getElementById('todayTotalNum').textContent = total;
+
+        document.getElementById('todayGrid').innerHTML = `
+          <div class="today-card"><div class="today-card-label">合格</div><div class="today-card-value pass">${pass}</div><div class="today-card-sub">${rate}% 合格率</div></div>
+          <div class="today-card"><div class="today-card-label">否</div><div class="today-card-value fail">${fail}</div><div class="today-card-sub">${judged>0?Math.round(fail/judged*100):0}%</div></div>
+        `;
+
+        const mvpEl = document.getElementById('todayMvp');
+        const tc = res.topCustomer, ti = res.topInputter;
+        mvpEl.innerHTML = `
+          <div class="mvp-card">
+            <div class="mvp-icon">🏭</div>
+            <div><div class="mvp-name">${tc ? tc.name : '—'}</div><div class="mvp-label">本日 最多客先</div></div>
+            <div class="mvp-count">${tc ? tc.count : 0}</div>
+          </div>
+          <div class="mvp-card">
+            <div class="mvp-icon">🏅</div>
+            <div><div class="mvp-name">${ti ? ti.name : '—'}</div><div class="mvp-label">本日 MVP（最多入力者）</div></div>
+            <div class="mvp-count">${ti ? ti.count : 0}</div>
+          </div>
+        `;
+      }catch(e){}
+    }
+
+    function loadAll(){ loadTodaySummary(); loadKpi(); loadSchedule(); loadDx(); }
     loadAll();
     setInterval(loadAll, 60000); // 1分ごとに自動更新
   </script>

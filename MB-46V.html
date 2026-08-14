@@ -168,6 +168,13 @@
   #kensaAuthCard button:disabled{opacity:.6;}
   #kensaAuthCard .err{color:#b3261e;font-size:12px;margin-top:10px;min-height:14px;}
   #kensaAuthCard .foot{margin-top:16px;font-size:10.5px;color:#a5abb6;}
+
+  #kensaUserBadge{display:none;position:fixed;top:8px;right:8px;z-index:9998;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border:1px solid #e7e9ee;border-radius:999px;padding:5px 8px 5px 5px;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#161b22;box-shadow:0 4px 14px rgba(0,0,0,.1);font-family:"Inter",sans-serif;}
+  #kensaUserBadge .av{width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#1b5fd6,#3b82f6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;flex:0 0 auto;}
+  #kensaUserBadge .role{font-size:9px;color:#68707c;font-weight:600;background:#f0f1f4;border-radius:999px;padding:2px 6px;}
+  #kensaUserBadge button{border:none;background:none;cursor:pointer;color:#a5abb6;font-size:13px;padding:0 2px;}
+  #kensaOfflineBadge{display:none;position:fixed;bottom:calc(66px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:9998;background:#161b22;color:#fff;border-radius:999px;padding:7px 14px;font-size:11px;font-weight:700;box-shadow:0 8px 20px rgba(0,0,0,.25);font-family:"Inter",sans-serif;align-items:center;gap:6px;white-space:nowrap;}
+  @media print{ #kensaAuthOverlay, #kensaUserBadge, #kensaOfflineBadge{ display:none !important; } }
 </style>
 <div id="kensaAuthOverlay">
   <div id="kensaAuthCard">
@@ -180,13 +187,26 @@
     <div class="foot">&#26481;&#20140;&#31934;&#23494;&#30330;&#26465;&#26666;&#24335;&#20250;&#31038;</div>
   </div>
 </div>
+<div id="kensaUserBadge">
+  <span class="av" id="kensaUserAvatar">?</span>
+  <span id="kensaUserName">-</span>
+  <span class="role" id="kensaUserRole"></span>
+  <button id="kensaLogoutBtn" title="&#12525;&#12464;&#12450;&#12454;&#12488;">&#10005;</button>
+</div>
+<div id="kensaOfflineBadge"></div>
 <script>
 (function(){
   var AUTH_KEY = 'kensa:session';
+  var QUEUE_KEY = 'kensa:offlineQueue';
+  var QUEUEABLE_ACTIONS = ['logSave','addScheduleItem','markScheduleDone','deleteScheduleItem','saveShipment'];
+
   function getSession(){ try{ return JSON.parse(localStorage.getItem(AUTH_KEY)||'null'); }catch(e){ return null; } }
   function setSession(s){ localStorage.setItem(AUTH_KEY, JSON.stringify(s)); }
   function clearSession(){ localStorage.removeItem(AUTH_KEY); }
   window.__kensaAuth = { getSession: getSession, setSession: setSession, clearSession: clearSession };
+
+  function getQueue(){ try{ return JSON.parse(localStorage.getItem(QUEUE_KEY)||'[]'); }catch(e){ return []; } }
+  function setQueue(q){ localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); }
 
   function findGasUrl(){
     if (window.GAS_URL) return window.GAS_URL;
@@ -215,17 +235,75 @@
         }).catch(function(){});
       }
       return res;
+    }).catch(function(err){
+      // Network gagal (offline) — untuk aksi ringan tertentu, antrekan supaya tidak hilang.
+      if (typeof url === 'string' && url.indexOf('script.google.com/macros') !== -1 && opts && opts.method === 'POST' && opts.body){
+        try{
+          var b = JSON.parse(opts.body);
+          if (QUEUEABLE_ACTIONS.indexOf(b.action) !== -1 && opts.body.length < 200000){
+            var q = getQueue();
+            q.push({ url: url, body: opts.body, ts: Date.now() });
+            setQueue(q);
+            updateOfflineBadge();
+            return new Response(JSON.stringify({ ok:true, queued:true }), { status:200, headers:{'Content-Type':'application/json'} });
+          }
+        }catch(e){}
+      }
+      throw err;
     });
   };
+
+  function updateOfflineBadge(){
+    var el = document.getElementById('kensaOfflineBadge');
+    if (!el) return;
+    var q = getQueue();
+    if (q.length > 0){
+      el.style.display = 'flex';
+      el.textContent = (navigator.onLine ? '\u9001\u4fe1\u4e2d\u2026 ' : '\ud83d\udd0c \u30aa\u30d5\u30e9\u30a4\u30f3\u4fdd\u5b58\u4e2d ') + q.length + '\u4ef6';
+    } else {
+      el.style.display = 'none';
+    }
+  }
+
+  function flushQueue(){
+    var q = getQueue();
+    if (q.length === 0) return;
+    (function next(){
+      var cur = getQueue();
+      if (cur.length === 0){ updateOfflineBadge(); return; }
+      var item = cur[0];
+      _fetch(item.url, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: item.body })
+        .then(function(res){ return res.json().catch(function(){ return {ok:true}; }); })
+        .then(function(j){
+          var q2 = getQueue();
+          q2.shift(); setQueue(q2); updateOfflineBadge();
+          if (getQueue().length > 0) next();
+        })
+        .catch(function(){ updateOfflineBadge(); /* masih offline, coba lagi nanti */ });
+    })();
+  }
+  window.addEventListener('online', flushQueue);
+  setInterval(flushQueue, 20000);
 
   function showGate(){
     var el = document.getElementById('kensaAuthOverlay');
     if (el) el.style.display = 'flex';
+    var badge = document.getElementById('kensaUserBadge'); if (badge) badge.style.display = 'none';
     setTimeout(function(){ var i = document.getElementById('kensaAuthPin'); if(i) i.focus(); }, 50);
   }
   function hideGate(){
     var el = document.getElementById('kensaAuthOverlay');
     if (el) el.style.display = 'none';
+  }
+  function showUserBadge(s){
+    var badge = document.getElementById('kensaUserBadge');
+    if (!badge || !s) return;
+    document.getElementById('kensaUserName').textContent = s.userName || '\u4e0d\u660e';
+    document.getElementById('kensaUserRole').textContent = s.role === 'admin' ? '\u7ba1\u7406\u8005' : '\u30aa\u30da\u30ec\u30fc\u30bf\u30fc';
+    document.getElementById('kensaUserAvatar').textContent = (s.userName || '?').slice(0,1);
+    badge.style.display = 'flex';
+    document.querySelectorAll('.admin-only').forEach(function(el){ el.style.display = (s.role === 'admin') ? '' : 'none'; });
+    document.body.setAttribute('data-role', s.role || 'operator');
   }
 
   function doLogin(){
@@ -241,7 +319,8 @@
       .then(function(res){ return res.json(); })
       .then(function(data){
         if (data && data.ok){
-          setSession({ token: data.token, expiresAt: Date.now() + (data.expiresInHours||12) * 3600 * 1000 });
+          var s = { token: data.token, expiresAt: Date.now() + (data.expiresInHours||12) * 3600 * 1000, userName: data.userName, role: data.role };
+          setSession(s);
           hideGate();
           location.reload();
         } else {
@@ -260,11 +339,19 @@
     var pinInput = document.getElementById('kensaAuthPin');
     if (btn) btn.addEventListener('click', doLogin);
     if (pinInput) pinInput.addEventListener('keydown', function(ev){ if (ev.key === 'Enter') doLogin(); });
+    var logoutBtn = document.getElementById('kensaLogoutBtn');
+    if (logoutBtn) logoutBtn.addEventListener('click', function(){
+      if (confirm('\u30ed\u30b0\u30a2\u30a6\u30c8\u3057\u307e\u3059\u304b\uff1f')){ clearSession(); location.reload(); }
+    });
 
     var s = getSession();
     if (!s || !s.token || !s.expiresAt || s.expiresAt < Date.now()){
       clearSession();
       showGate();
+    } else {
+      showUserBadge(s);
+      updateOfflineBadge();
+      flushQueue();
     }
   });
 
@@ -282,6 +369,7 @@
     </a>
     <button type="button" class="btn-primary" onclick="printViaPDF()">🖨️ 印刷</button>
     <button type="button" class="btn-primary" style="position:relative;" onclick="saveToGoogleDrive()">☁️ 保存<span id="missingBadge" style="position:absolute;top:-6px;right:-6px;background:#d32f2f;color:#fff;font-size:10px;font-weight:800;min-width:16px;height:16px;border-radius:999px;align-items:center;justify-content:center;padding:0 3px;box-shadow:0 0 0 2px #fff;"></span></button>
+    <button type="button" class="btn-primary" style="background:#7c3aed;" onclick="promptBatchSave()" title="同じ部品を複数個まとめて保存">🧮 一括保存</button>
     <details class="toolbar-menu">
       <summary>⚙️ 設定</summary>
       <div class="toolbar-menu-panel no-print">
@@ -468,6 +556,96 @@
         loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js')
       ]);
       __libsLoaded = true;
+    }
+
+    /* ---------- 一括保存（同じ部品を複数個まとめて採番・保存） ----------
+       同一部品が複数個（例：10個）ある場合、1個ずつ保存を繰り返す代わりに、
+       数量を指定して一度に連番採番＋複数ページPDF化＋一括アップロードする。
+       製造Noは他端末とぶつからないよう nextSuffix に count を渡してサーバー側で
+       まとめて予約する（1個ずつ採番するより高速＆安全）。 ---------- */
+    async function saveBatchToGoogleDrive(qty){
+      qty = Math.max(1, Math.min(50, parseInt(qty, 10) || 1));
+      if (window.__busy) return; window.__busy = true;
+      try{
+        const ok = await ensureHasLockOrAcquire();
+        if(!ok){ alert('現在ほかの端末が使用中のため、保存できません。'); return; }
+        const isPass = recomputeFinalJudgment();
+        if(!isPass){
+          const bikou = document.querySelector('input[name="bikou"]');
+          if(!bikou?.value.trim()){ alert('総合判定が「否」です。[備考]欄に理由を記入してから保存してください。'); bikou?.focus(); return; }
+          if(!confirm(`総合判定が「否」です。${qty}件すべてこのまま保存しますか？`)) return;
+        }
+        if(__photos.length === 0){
+          alert('検査品の写真が1枚もありません。「📷 写真を撮る」で最低1枚撮影してから保存してください。');
+          document.getElementById('photoCount')?.classList.add('need');
+          return;
+        }
+        if(!prefixReady()){ alert('製造Noを発行するには図番（6桁の数字部分）が必要です。'); return; }
+
+        const prefix = serverPrefix();
+        const reserved = await apiGAS({ action:'nextSuffix', prefix, count: qty });
+        if (typeof reserved?.suffixStart !== 'number') throw new Error(reserved?.message || '採番に失敗しました');
+        if (typeof reserved.digits === 'number') PAD_DIGITS = reserved.digits;
+
+        await ensureLibsLoaded();
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a5' });
+        const units = [];
+
+        for (let i = 0; i < qty; i++){
+          setSerialSuffix(reserved.suffixStart + i);
+          const verifyId = makeVerifyId();
+          const canvas = await renderFormCanvas();
+          if (i > 0) doc.addPage();
+          doc.addImage(canvas.toDataURL('image/png'), 'PNG', 11.5, 6, 125, 182);
+          const qrUrl = generateVerifyQRDataUrl(verifyId);
+          if (qrUrl){
+            doc.addImage(qrUrl, 'PNG', 127, 190, 16, 16);
+            doc.setFontSize(5); doc.setTextColor(120);
+            doc.text('スキャンして認証', 135, 208, { align:'center' });
+          }
+          units.push({
+            serial_full: getSerialFull(),
+            verify_id: verifyId,
+            judgment: document.querySelector('select[name="final_judgment"]')?.value || ''
+          });
+        }
+
+        const md = document.querySelector('input[name="makingdate"]')?.value;
+        const ymd = md ? md.replace(/-/g,'') : (()=>{const t=new Date(); return t.getFullYear()+String(t.getMonth()+1).padStart(2,'0')+String(t.getDate()).padStart(2,'0');})();
+        const customer = (document.querySelector('.header-table tr:nth-child(1) td:nth-child(2)')?.textContent || '').trim();
+        const hinmei = document.getElementById('fieldHinmei')?.textContent || '';
+        const sanitizeName = s => String(s||'').replace(/[\\/:*?"<>|]/g,'').trim() || 'no-value';
+        const baseName = `${sanitizeName(customer)}_${sanitizeName(hinmei)}_${reserved.suffixStart}-${reserved.suffixStart+qty-1}_${ymd}_x${qty}`;
+        const fileName = baseName + '.pdf';
+        const pdfBase64 = await blobToBase64(doc.output('blob'));
+
+        const photos = [];
+        for (let i = 0; i < __photos.length; i++){
+          const photoName = `${baseName}_photo${String(i+1).padStart(2,'0')}.jpg`;
+          photos.push({ fileName: photoName, base64: await blobToBase64(__photos[i].blob) });
+        }
+
+        const res = await apiGAS({ action:'uploadInspectionBatch', app_ns:APP_NS, customer, hinmei, fileName, pdfBase64, photos, units });
+        if (res?.ok){
+          const last = units[units.length-1];
+          showSaveSuccessModal(`${units[0].serial_full} 〜 ${last.serial_full}（${qty}件）`, last.judgment, res.savedPhotos ?? photos.length);
+        } else {
+          throw new Error(res?.message || '一括保存に失敗しました');
+        }
+      } catch(e){
+        console.error('Batch save failed', e);
+        alert('一括保存に失敗しました。\n' + (e.message || e));
+      } finally { window.__busy = false; }
+    }
+
+    function promptBatchSave(){
+      const s = prompt('同じ部品を何個まとめて保存しますか？（1〜50）', '1');
+      if (s == null) return;
+      const qty = parseInt(String(s).replace(/[^\d]/g,''), 10);
+      if (!Number.isFinite(qty) || qty < 1){ alert('1以上の整数を入力してください'); return; }
+      if (qty === 1){ saveToGoogleDrive(); return; }
+      saveBatchToGoogleDrive(qty);
     }
     const ACTIVE_PREFIX_KEY = 'kensa_prefix'; // admin override
     const serverPrefix = () => `${APP_NS}::${getSerialPrefix()}`;

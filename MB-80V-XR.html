@@ -9,14 +9,12 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#0a8ffc" />
   <link rel="apple-touch-icon" href="tsh.png" onerror="this.remove()">
-  <link rel="icon" href="tsh.png" onerror="this.remove()">
+  <link rel="manifest" href="manifest.json">
+<link rel="icon" href="tsh.png" onerror="this.remove()">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
   <!-- PDF libs -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     html, body { background:linear-gradient(180deg,#eef1f6,#e3e8ef); margin:0; padding:0; font-family:"Noto Sans JP","Hiragino Kaku Gothic ProN",Arial,sans-serif; font-size:3.5mm; height:100%; -webkit-font-smoothing:antialiased; }
     .no-print { display: initial; } .print-text { display: none; }
@@ -158,6 +156,126 @@
   </style>
  </head>
 <body>
+<style id="kensaAuthStyle">
+  #kensaAuthOverlay{position:fixed;inset:0;z-index:99999;background:rgba(10,14,20,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px;font-family:"Inter","Noto Sans JP",-apple-system,sans-serif;}
+  #kensaAuthCard{background:#fff;border-radius:20px;padding:32px 26px;max-width:320px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center;}
+  #kensaAuthCard .icon{width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#1b5fd6,#3b82f6);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:#fff;font-size:22px;}
+  #kensaAuthCard h2{font-size:15px;margin:0 0 4px;color:#161b22;font-weight:800;}
+  #kensaAuthCard p{font-size:12px;color:#68707c;margin:0 0 18px;}
+  #kensaAuthCard input{width:100%;font-size:20px;letter-spacing:.3em;text-align:center;padding:13px;border-radius:12px;border:1.5px solid #e7e9ee;outline:none;font-family:monospace;box-sizing:border-box;}
+  #kensaAuthCard input:focus{border-color:#1b5fd6;}
+  #kensaAuthCard button{width:100%;margin-top:12px;padding:13px;border:none;border-radius:12px;background:linear-gradient(135deg,#1b5fd6,#3b82f6);color:#fff;font-weight:700;font-size:14px;cursor:pointer;}
+  #kensaAuthCard button:disabled{opacity:.6;}
+  #kensaAuthCard .err{color:#b3261e;font-size:12px;margin-top:10px;min-height:14px;}
+  #kensaAuthCard .foot{margin-top:16px;font-size:10.5px;color:#a5abb6;}
+</style>
+<div id="kensaAuthOverlay">
+  <div id="kensaAuthCard">
+    <div class="icon">&#128274;</div>
+    <h2>&#12525;&#12464;&#12452;&#12531;&#12364;&#24517;&#35201;&#12391;&#12377;</h2>
+    <p>&#25285;&#24403;&#32773;PIN&#12434;&#20837;&#21147;&#12375;&#12390;&#12367;&#12384;&#12373;&#12356;</p>
+    <input id="kensaAuthPin" type="password" inputmode="numeric" autocomplete="off" placeholder="****" maxlength="10" />
+    <button id="kensaAuthBtn" type="button">&#12525;&#12464;&#12452;&#12531;</button>
+    <div class="err" id="kensaAuthErr"></div>
+    <div class="foot">&#26481;&#20140;&#31934;&#23494;&#30330;&#26465;&#26666;&#24335;&#20250;&#31038;</div>
+  </div>
+</div>
+<script>
+(function(){
+  var AUTH_KEY = 'kensa:session';
+  function getSession(){ try{ return JSON.parse(localStorage.getItem(AUTH_KEY)||'null'); }catch(e){ return null; } }
+  function setSession(s){ localStorage.setItem(AUTH_KEY, JSON.stringify(s)); }
+  function clearSession(){ localStorage.removeItem(AUTH_KEY); }
+  window.__kensaAuth = { getSession: getSession, setSession: setSession, clearSession: clearSession };
+
+  function findGasUrl(){
+    if (window.GAS_URL) return window.GAS_URL;
+    var m = document.documentElement.innerHTML.match(/https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec/);
+    return m ? m[0] : null;
+  }
+
+  var _fetch = window.fetch;
+  window.fetch = function(url, opts){
+    if (typeof url === 'string' && url.indexOf('script.google.com/macros') !== -1 && opts && opts.method === 'POST' && opts.body){
+      try{
+        var body = JSON.parse(opts.body);
+        if (body.action !== 'login'){
+          var s = getSession();
+          body.token = s ? s.token : '';
+        }
+        opts = Object.assign({}, opts, { body: JSON.stringify(body) });
+      }catch(e){}
+    }
+    return _fetch(url, opts).then(function(res){
+      if (typeof url === 'string' && url.indexOf('script.google.com/macros') !== -1){
+        res.clone().json().then(function(j){
+          if (j && j.ok === false && (j.error === 'unauthorized' || j.error === 'session-expired')){
+            clearSession(); showGate();
+          }
+        }).catch(function(){});
+      }
+      return res;
+    });
+  };
+
+  function showGate(){
+    var el = document.getElementById('kensaAuthOverlay');
+    if (el) el.style.display = 'flex';
+    setTimeout(function(){ var i = document.getElementById('kensaAuthPin'); if(i) i.focus(); }, 50);
+  }
+  function hideGate(){
+    var el = document.getElementById('kensaAuthOverlay');
+    if (el) el.style.display = 'none';
+  }
+
+  function doLogin(){
+    var pinInput = document.getElementById('kensaAuthPin');
+    var errEl = document.getElementById('kensaAuthErr');
+    var btn = document.getElementById('kensaAuthBtn');
+    var pin = (pinInput.value || '').trim();
+    if (!pin){ errEl.textContent = 'PIN\u3092\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044'; return; }
+    var gasUrl = findGasUrl();
+    if (!gasUrl){ errEl.textContent = '\u30d0\u30c3\u30af\u30a8\u30f3\u30c9URL\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093'; return; }
+    btn.disabled = true; btn.textContent = '\u78ba\u8a8d\u4e2d\u2026'; errEl.textContent = '';
+    _fetch(gasUrl, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify({ action:'login', pin: pin, deviceName: navigator.userAgent.slice(0,60) }) })
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        if (data && data.ok){
+          setSession({ token: data.token, expiresAt: Date.now() + (data.expiresInHours||12) * 3600 * 1000 });
+          hideGate();
+          location.reload();
+        } else {
+          errEl.textContent = (data && data.message) || 'PIN\u304c\u9055\u3044\u307e\u3059';
+          btn.disabled = false; btn.textContent = '\u30ed\u30b0\u30a4\u30f3';
+        }
+      })
+      .catch(function(){
+        errEl.textContent = '\u901a\u4fe1\u30a8\u30e9\u30fc\u3002\u3082\u3046\u4e00\u5ea6\u304a\u8a66\u3057\u304f\u3060\u3055\u3044\u3002';
+        btn.disabled = false; btn.textContent = '\u30ed\u30b0\u30a4\u30f3';
+      });
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    var btn = document.getElementById('kensaAuthBtn');
+    var pinInput = document.getElementById('kensaAuthPin');
+    if (btn) btn.addEventListener('click', doLogin);
+    if (pinInput) pinInput.addEventListener('keydown', function(ev){ if (ev.key === 'Enter') doLogin(); });
+
+    var s = getSession();
+    if (!s || !s.token || !s.expiresAt || s.expiresAt < Date.now()){
+      clearSession();
+      showGate();
+    }
+  });
+
+  if ('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('./sw.js').catch(function(){});
+    });
+  }
+})();
+</script>
+
   <div class="toolbar">
     <a href="index.html" class="toolbar-home-btn no-print" title="ポータルに戻る">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>
@@ -330,6 +448,29 @@
     const APP_NS  = 'mb80v_xr';
     const SIDE_CODE = 'XR'; // khusus MB-80V sisi kanan; prefix jadi "XR" + 6 digit dari 図番
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbxS2x82HUV6wBw9uZUwRw_2u8LcBhQiol8FZsGxoN_X-CywGMffWHJRMQMMkrNXqaq0Gg/exec';
+
+    /* ---------- Lazy-load PDF/QR libraries (baru dimuat saat dibutuhkan, bukan saat halaman dibuka) ---------- */
+    function loadScriptOnce(src){
+      return new Promise(function(resolve, reject){
+        var existing = document.querySelector('script[data-lazy-src="' + src + '"]');
+        if (existing){ if (existing.dataset.loaded === '1') resolve(); else existing.addEventListener('load', function(){ resolve(); }); return; }
+        var s = document.createElement('script');
+        s.src = src; s.dataset.lazySrc = src;
+        s.onload = function(){ s.dataset.loaded = '1'; resolve(); };
+        s.onerror = function(){ reject(new Error('load-failed: ' + src)); };
+        document.head.appendChild(s);
+      });
+    }
+    let __libsLoaded = false;
+    async function ensureLibsLoaded(){
+      if (__libsLoaded) return;
+      await Promise.all([
+        loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'),
+        loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'),
+        loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js')
+      ]);
+      __libsLoaded = true;
+    }
     const ACTIVE_PREFIX_KEY = 'kensa_prefix'; // admin override
     const serverPrefix = () => `${APP_NS}::${getSerialPrefix()}`;
     const SERIAL_SCOPE = () => `okuma:serial:${APP_NS}:${getSerialPrefix() || (SIDE_CODE+'330520-')}`;
@@ -936,6 +1077,7 @@ if (!prefixReady()) { applyPrefix(); if (!prefixReady()) return false; }
       }
     }
     async function buildPdfDoc(verifyId){
+      await ensureLibsLoaded();
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a5' });
       const canvas = await renderFormCanvas();

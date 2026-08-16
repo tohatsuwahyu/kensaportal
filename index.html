@@ -45,7 +45,14 @@
 
   /* ---------- App bar ---------- */
   .appbar{ display:flex; align-items:center; gap:10px; padding:4px 2px 12px; }
-  .appbar-actions{ display:flex; gap:8px; overflow-x:auto; padding:2px 2px 18px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+.appbar-actions{
+  display:flex;
+  gap:9px;
+  overflow-x:auto;
+  padding:2px 2px 18px;
+  scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+}
   .appbar-actions::-webkit-scrollbar{ display:none; }
   .appbar .logo{
     width:42px; height:42px; border-radius:12px; background:var(--card); flex:0 0 auto;
@@ -56,12 +63,61 @@
   .appbar-text{ flex:1; min-width:0; }
   .appbar-text .eyebrow{ font-size:10.5px; font-weight:700; color:var(--accent); letter-spacing:.09em; text-transform:uppercase; }
   .appbar-text h1{ font-size:18px; font-weight:800; margin:1px 0 0; letter-spacing:-.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .dx-badge{
-    flex:0 0 auto; display:flex; align-items:center; gap:5px; font-size:10px; font-weight:700;
-    color:#8a5a00; background:linear-gradient(135deg,#fff4d6,#ffe9b3); border:1px solid #f0d28a;
-    padding:6px 10px; border-radius:999px; white-space:nowrap;
-  }
+ .dx-badge{
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  min-height:34px;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid #f0d28a;
+  background:linear-gradient(135deg,#fff4d6,#ffe9b3);
+  color:#8a5a00;
+  font-size:11px;
+  font-weight:700;
+  white-space:nowrap;
+  text-decoration:none;
+  cursor:pointer;
+  transition:transform .15s ease, box-shadow .15s ease, filter .15s ease;
+}
+.dx-badge:hover{
+  transform:translateY(-1px);
+  box-shadow:0 6px 14px rgba(20,30,60,.10);
+  filter:saturate(1.06);
+}
 
+.dx-badge:active{
+  transform:scale(.96);
+}
+
+.dx-badge:focus-visible{
+  outline:3px solid rgba(27,95,214,.22);
+  outline-offset:2px;
+}
+  .dx-badge svg{
+  width:15px;
+  height:15px;
+  stroke-width:2;
+}
+
+.action-manual{
+  background:linear-gradient(135deg,#eaf1ff,#f3f7ff);
+  color:var(--accent);
+  border-color:#dde6f9;
+}
+
+.action-schedule{
+  background:linear-gradient(135deg,#eaf7f0,#f2fbf6);
+  color:#0f8a53;
+  border-color:#cdeedd;
+}
+
+.action-signage{
+  background:linear-gradient(135deg,#f3edfd,#f8f4fe);
+  color:#7c3aed;
+  border-color:#e3d5fb;
+}
   /* ---------- Quick stats ---------- */
   .hero-banner{
     position:relative; overflow:hidden; border-radius:22px; padding:22px 24px; margin-bottom:18px;
@@ -433,21 +489,55 @@
       </div>
     </div>
     <div class="appbar-actions">
-      <a href="manual.html" class="dx-badge" style="text-decoration:none; background:linear-gradient(135deg,#eaf1ff,#f3f7ff); color:var(--accent); border-color:#dde6f9;" title="使い方ガイド">❓ 使い方</a>
-      <a href="schedule.html" class="dx-badge" style="text-decoration:none; background:linear-gradient(135deg,#eaf7f0,#f2fbf6); color:#0f8a53; border-color:#cdeedd;" title="本日の予定 ／ 出荷確認書">📅 予定</a>
-      <a href="signage.html" class="dx-badge" style="text-decoration:none; background:linear-gradient(135deg,#f3edfd,#f8f4fe); color:#7c3aed; border-color:#e3d5fb;" title="TV表示モード">📺 TV表示</a>
-    <a href="dx-report.html"
+   <a href="manual.html"
+   class="dx-badge action-manual"
+   title="操作マニュアルを開く">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/>
+  </svg>
+  操作マニュアル
+</a>
+
+<a href="schedule.html"
+   class="dx-badge action-schedule"
+   title="検査予定を開く">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="5" width="18" height="16" rx="2"/>
+    <path d="M16 3v4M8 3v4M3 11h18"/>
+  </svg>
+  検査予定
+</a>
+
+<a href="signage.html"
+   class="dx-badge action-signage"
+   title="サイネージ表示を開く">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2" y="3" width="20" height="14" rx="2"/>
+    <path d="M8 21h8M12 17v4"/>
+  </svg>
+  サイネージ
+</a>
+
+<a href="dx-report.html"
    class="dx-badge"
-   title="DX活動サマリーを開く"
-   aria-label="DX活動サマリーを開く">
-  🚀 DX推進
+   title="DX活動サマリーを開く">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 3v18h18"/>
+    <path d="m7 16 4-5 4 3 5-7"/>
+  </svg>
+  DXレポート
 </a>
     </div>
 
     <div class="hero-banner">
       <div class="hero-banner-row">
         <div>
-          <div class="hero-banner-eyebrow">Digital Quality Record</div>
+       <div class="hero-banner-eyebrow">出荷検査記録システム</div>
           <div class="hero-banner-title">B5サイズ印刷済み、そのまま出荷帳票に。<br>記録はデジタルで、証明書はワンタップ印刷。</div>
         </div>
         <div class="hero-banner-icon">
@@ -470,7 +560,7 @@
       <div class="stat-card fail">
         <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></div>
         <div class="stat-num" id="statFail">–</div>
-        <div class="stat-label">否</div>
+      <div class="stat-label">不合格</div>
       </div>
     </div>
 
@@ -491,7 +581,9 @@
       該当するフォームが見つかりません。<br>検索キーワードを変えてお試しください。
     </div>
 
-    <div class="footer-note">© 東京精密発條株式会社 All Rights Reserved　／　Design by Wahyu</div>
+  <div class="footer-note">
+  © 東京精密発條株式会社　｜　出荷検査記録システム
+</div>
   </div>
 
   <nav class="bottom-nav">

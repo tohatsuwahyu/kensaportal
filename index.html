@@ -154,6 +154,139 @@
   .stat-card .stat-num{ font-family:var(--mono); font-size:19px; font-weight:600; line-height:1; }
   .stat-card .stat-label{ font-size:10.5px; color:var(--sub); font-weight:600; margin-top:5px; }
 
+/* ---------- 最近使用したフォーム ---------- */
+.recent-section{
+  display:none;
+  margin-bottom:20px;
+}
+
+.recent-section.show{
+  display:block;
+}
+
+.recent-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin:0 2px 10px;
+}
+
+.recent-title{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  color:var(--ink);
+  font-size:12.5px;
+  font-weight:700;
+}
+
+.recent-title svg{
+  width:15px;
+  height:15px;
+  color:var(--accent);
+}
+
+.recent-clear{
+  padding:4px 8px;
+  border:0;
+  background:transparent;
+  color:var(--sub);
+  font-family:inherit;
+  font-size:10.5px;
+  cursor:pointer;
+}
+
+.recent-clear:hover{
+  color:var(--accent);
+}
+
+.recent-list{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:9px;
+}
+
+.recent-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+  padding:12px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:var(--card);
+  color:inherit;
+  text-decoration:none;
+  box-shadow:var(--shadow-sm);
+  transition:
+    transform .15s ease,
+    box-shadow .15s ease,
+    border-color .15s ease;
+}
+
+.recent-item:hover{
+  transform:translateY(-1px);
+  border-color:#cdd9ec;
+  box-shadow:var(--shadow-md);
+}
+
+.recent-icon{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:34px;
+  height:34px;
+  flex:0 0 auto;
+  border-radius:10px;
+  background:var(--soft, #eef4ff);
+  color:var(--accent);
+}
+
+.recent-icon svg{
+  width:17px;
+  height:17px;
+}
+
+.recent-text{
+  min-width:0;
+}
+
+.recent-name{
+  overflow:hidden;
+  color:var(--ink);
+  font-size:12px;
+  font-weight:800;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.recent-customer{
+  overflow:hidden;
+  margin-top:2px;
+  color:var(--sub);
+  font-size:9.5px;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+@media(max-width:640px){
+  .recent-list{
+    display:flex;
+    overflow-x:auto;
+    padding-bottom:4px;
+    scrollbar-width:none;
+  }
+
+  .recent-list::-webkit-scrollbar{
+    display:none;
+  }
+
+  .recent-item{
+    width:190px;
+    flex:0 0 190px;
+  }
+}
+  
   /* ---------- Search ---------- */
   .search-input-wrap{ position:relative; margin-bottom:12px; }
   .search-input-wrap input{
@@ -563,7 +696,31 @@
       <div class="stat-label">不合格</div>
       </div>
     </div>
+<section class="recent-section" id="recentSection">
+  <div class="recent-header">
+    <div class="recent-title">
+      <svg viewBox="0 0 24 24"
+           fill="none"
+           stroke="currentColor"
+           stroke-width="2"
+           stroke-linecap="round"
+           stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M12 7v5l3 2"/>
+      </svg>
 
+      最近使用したフォーム
+    </div>
+
+    <button type="button"
+            class="recent-clear"
+            id="recentClear">
+      履歴をクリア
+    </button>
+  </div>
+
+  <div class="recent-list" id="recentList"></div>
+</section>
     <div class="cat-section">
       <div class="cat-section-title">客先から探す <span class="sub">タップで絞り込み</span></div>
       <div class="cat-grid" id="catGrid"></div>
@@ -649,7 +806,88 @@
     const countEl = document.getElementById('resultCount');
 
     let activeCustomer = null;
+const RECENT_FORMS_KEY = 'kensa:recentForms';
+const RECENT_FORMS_LIMIT = 3;
 
+function getRecentForms(){
+  try{
+    const saved = JSON.parse(
+      localStorage.getItem(RECENT_FORMS_KEY) || '[]'
+    );
+
+    return Array.isArray(saved) ? saved : [];
+  }catch(e){
+    return [];
+  }
+}
+
+function rememberForm(file){
+  const recent = getRecentForms()
+    .filter(item => item !== file);
+
+  recent.unshift(file);
+
+  localStorage.setItem(
+    RECENT_FORMS_KEY,
+    JSON.stringify(recent.slice(0, RECENT_FORMS_LIMIT))
+  );
+}
+
+function renderRecentForms(){
+  const section = document.getElementById('recentSection');
+  const list = document.getElementById('recentList');
+
+  if(!section || !list) return;
+
+  const recentForms = getRecentForms()
+    .map(file => FORM_REGISTRY.find(form => form.file === file))
+    .filter(Boolean);
+
+  if(recentForms.length === 0){
+    section.classList.remove('show');
+    list.innerHTML = '';
+    return;
+  }
+
+  section.classList.add('show');
+
+  list.innerHTML = recentForms.map(form => `
+    <a href="${form.file}"
+       class="recent-item"
+       data-recent-file="${form.file}">
+
+      <span class="recent-icon">
+        <svg viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2"
+             stroke-linecap="round"
+             stroke-linejoin="round">
+          <path d="M9 11l3 3L22 4"/>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5
+                   a2 2 0 0 1-2-2V5
+                   a2 2 0 0 1 2-2h11"/>
+        </svg>
+      </span>
+
+      <span class="recent-text">
+        <span class="recent-name">
+          ${form.kikishu}　${form.hinmei}
+        </span>
+
+        <span class="recent-customer">
+          ${form.customer}
+        </span>
+      </span>
+    </a>
+  `).join('');
+
+  list.querySelectorAll('[data-recent-file]').forEach(link => {
+    link.addEventListener('click', () => {
+      rememberForm(link.dataset.recentFile);
+    });
+  });
+}
     function initials(str){ const s=(str||'').trim(); return s ? s[0] : '?'; }
 
     const QC_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>';
@@ -718,6 +956,7 @@
           const a = document.createElement('a');
           a.className = 'card';
           a.href = f.file;
+          a.addEventListener('click', () => rememberForm(f.file));
           const c = colorFor(f.customer);
           a.innerHTML = `
             <div class="card-hero" style="background:${c};">
@@ -737,9 +976,17 @@
         });
     }
 
-    searchInput.addEventListener('input', render);
-    buildCatTiles();
-    render();
+  searchInput.addEventListener('input', render);
+
+document.getElementById('recentClear')
+  ?.addEventListener('click', () => {
+    localStorage.removeItem(RECENT_FORMS_KEY);
+    renderRecentForms();
+  });
+
+buildCatTiles();
+renderRecentForms();
+render();
 
     /* ---------- Quick stats (今週) ---------- */
     async function loadQuickStats(){

@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <meta name="theme-color" content="#1b5fd6">
+
+  <title>操作マニュアル — 出荷検査記録システム</title>
+
+  <link rel="icon" href="tsh.png">
+
+  <style>
+    :root{
+      --accent:#1b5fd6;
+      --accent-dark:#172554;
+      --ink:#172033;
+      --sub:#64748b;
+      --line:#e5eaf2;
+      --bg:#f3f6fb;
+      --card:#ffffff;
+      --soft:#eef4ff;
+      --green:#137a4b;
+    }
+
+    *{
+      box-sizing:border-box;
+    }
+
+    body{
+      margin:0;
+      min-height:100vh;
+      background:
+        linear-gradient(180deg,#f8fbff,var(--bg));
+      color:var(--ink);
+      font-family:
+        Inter,
+        "Noto Sans JP",
+        "Yu Gothic",
+        sans-serif;
+      line-height:1.7;
+    }
+
+    .wrap{
+      max-width:920px;
+      margin:0 auto;
+      padding:24px 20px 64px;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:26px;
+    }
+
+    .back{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      color:var(--sub);
+      font-size:13px;
+      font-weight:700;
+      text-decoration:none;
+    }
+
+    .back svg{
+      width:17px;
+      height:17px;
+    }
+
+    .company{
+      color:var(--sub);
+      font-size:11px;
+      font-weight:700;
+    }
+
+    .hero{
+      padding:30px;
+      margin-bottom:22px;
+      border-radius:24px;
+      overflow:hidden;
+      color:#ffffff;
+      background:
+        linear-gradient(
+          125deg,
+          var(--accent-dark),
+          #1d4ed8 58%,
+          #4f46e5
+        );
+      box-shadow:
+        0 20px 45px -20px rgba(30,64,175,.60);
+    }
+
+    .hero small{
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:.08em;
+      opacity:.80;
+    }
+
+    .hero h1{
+      margin:7px 0;
+      font-size:27px;
+      line-height:1.35;
+    }
+
+    .hero p{
+      margin:0;
+      font-size:13px;
+      opacity:.88;
+    }
+
+    .notice{
+      display:flex;
+      align-items:flex-start;
+      gap:12px;
+      margin-bottom:22px;
+      padding:15px 17px;
+      border:1px solid #ccefdc;
+      border-radius:14px;
+      background:#ecfdf3;
+      color:#145b39;
+      font-size:12.5px;
+    }
+
+    .notice svg{
+      width:19px;
+      height:19px;
+      flex:0 0 auto;
+      margin-top:2px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:15px;
+    }
+
+    .section{
+      padding:21px;
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:var(--card);
+      box-shadow:0 1px 3px rgba(15,23,42,.04);
+    }
+
+    .section.wide{
+      grid-column:1 / -1;
+    }
+
+    .section h2{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin:0 0 14px;
+      font-size:15px;
+    }
+
+    .number{
+      display:grid;
+      place-items:center;
+      width:28px;
+      height:28px;
+      flex:0 0 auto;
+      border-radius:9px;
+      background:var(--soft);
+      color:var(--accent);
+      font-size:12px;
+    }
+
+    .steps{
+      margin:0;
+      padding-left:20px;
+      color:var(--sub);
+      font-size:13px;
+    }
+
+    .steps li + li{
+      margin-top:7px;
+    }
+
+    .help{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+
+    .help-item{
+      padding:12px 14px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fafcff;
+    }
+
+    .help-item strong{
+      display:block;
+      font-size:12px;
+    }
+
+    .help-item span{
+      color:var(--sub);
+      font-size:11.5px;
+    }
+
+    .footer{
+      margin-top:28px;
+      color:#94a3b8;
+      font-size:10.5px;
+      text-align:center;
+    }
+
+    @media(max-width:640px){
+      .wrap{
+        padding:16px 14px 42px;
+      }
+
+      .company{
+        display:none;
+      }
+
+      .hero{
+        padding:24px 21px;
+      }
+
+      .hero h1{
+        font-size:23px;
+      }
+
+      .grid,
+      .help{
+        grid-template-columns:1fr;
+      }
+
+      .section.wide{
+        grid-column:auto;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="wrap">
+
+    <div class="topbar">
+      <a href="index.html" class="back">
+        <svg viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2.2"
+             stroke-linecap="round"
+             stroke-linejoin="round">
+          <path d="m15 18-6-6 6-6"/>
+        </svg>
+
+        ホームへ戻る
+      </a>
+
+      <span class="company">
+        東京精密発條株式会社
+      </span>
+    </div>
+
+    <header class="hero">
+      <small>USER GUIDE</small>
+
+      <h1>操作マニュアル</h1>
+
+      <p>
+        出荷検査記録システムの基本操作をご案内します。
+      </p>
+    </header>
+
+    <div class="notice">
+      <svg viewBox="0 0 24 24"
+           fill="none"
+           stroke="currentColor"
+           stroke-width="2">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M12 8v5M12 17h.01"/>
+      </svg>
+
+      <div>
+        <strong>帳票様式について</strong><br>
+
+        承認済みの出荷検査成績書のレイアウトおよび
+        印刷様式は変更されません。
+      </div>
+    </div>
+
+    <div class="grid">
+
+      <section class="section">
+        <h2>
+          <span class="number">01</span>
+          検査対象を選択
+        </h2>
+
+        <ol class="steps">
+          <li>ホーム画面で得意先を選択します。</li>
+          <li>検索欄に機種・品名・図番を入力します。</li>
+          <li>対象の検査フォームを選択します。</li>
+        </ol>
+      </section>
+
+      <section class="section">
+        <h2>
+          <span class="number">02</span>
+          検査結果を入力
+        </h2>
+
+        <ol class="steps">
+          <li>各検査項目の測定値を入力します。</li>
+          <li>入力内容と判定を確認します。</li>
+          <li>必要な項目をすべて完了します。</li>
+        </ol>
+      </section>
+
+      <section class="section">
+        <h2>
+          <span class="number">03</span>
+          保存・印刷
+        </h2>
+
+        <ol class="steps">
+          <li>入力内容を再確認して保存します。</li>
+          <li>総合判定が正しいことを確認します。</li>
+          <li>B5設定を確認して帳票を印刷します。</li>
+        </ol>
+      </section>
+
+      <section class="section">
+        <h2>
+          <span class="number">04</span>
+          履歴を確認
+        </h2>
+
+        <ol class="steps">
+          <li>画面下部の「履歴」を開きます。</li>
+          <li>日付・得意先・図番で検索します。</li>
+          <li>対象記録を開いて内容を確認します。</li>
+        </ol>
+      </section>
+
+      <section class="section">
+        <h2>
+          <span class="number">05</span>
+          検査予定を確認
+        </h2>
+
+        <ol class="steps">
+          <li>ホームの「検査予定」を開きます。</li>
+          <li>本日および今後の予定を確認します。</li>
+          <li>作業完了後にステータスを更新します。</li>
+        </ol>
+      </section>
+
+      <section class="section">
+        <h2>
+          <span class="number">06</span>
+          通信エラー時
+        </h2>
+
+        <ol class="steps">
+          <li>ネットワーク接続を確認します。</li>
+          <li>ページを再読み込みします。</li>
+          <li>改善しない場合は管理者へ連絡します。</li>
+        </ol>
+      </section>
+
+      <section class="section wide">
+        <h2>
+          <span class="number">?</span>
+          よくある確認事項
+        </h2>
+
+        <div class="help">
+
+          <div class="help-item">
+            <strong>保存ボタンが押せない</strong>
+            <span>
+              必須項目および総合判定を確認してください。
+            </span>
+          </div>
+
+          <div class="help-item">
+            <strong>データが表示されない</strong>
+            <span>
+              接続状況を確認して再読み込みしてください。
+            </span>
+          </div>
+
+          <div class="help-item">
+            <strong>印刷位置がずれる</strong>
+            <span>
+              用紙サイズB5・倍率100%を確認してください。
+            </span>
+          </div>
+
+          <div class="help-item">
+            <strong>対象製品が見つからない</strong>
+            <span>
+              得意先フィルターを解除し、
+              図番で検索してください。
+            </span>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+
+    <footer class="footer">
+      © 東京精密発條株式会社
+      ｜ 出荷検査記録システム
+    </footer>
+
+  </main>
+</body>
+</html>
